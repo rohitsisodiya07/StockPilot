@@ -1,5 +1,5 @@
 import * as model from "@/Model/index";
-
+import { Op, col } from "sequelize";
 //Checks if inventory already exists for a specific product in a specific warehouse.
 const findInventory = async (productId, warehouseId) => {
     return await model.Inventory.findOne({
@@ -74,6 +74,37 @@ const deleteInventory = async (id) => {
     return inventory;
 };
 
+
+//Finds products whose stock is at or below the reorder level.
+const getLowStockInventory = async (warehouseId) => {
+    return await model.Inventory.findAll({
+        where: {
+            warehouseId,
+            quantity: {
+                [Op.lte]: col("reorderLevel"),
+                //Op.lte — Checks whether quantity is less than or equal to the reorder level.
+                // col("reorderLevel") — Compares quantity with the database column reorderLevel.
+            },
+        },
+        attributes: [
+            "id",
+            "productId",
+            "warehouseId",
+            "quantity",
+            "reorderLevel",
+        ],
+        include: [
+            {
+                model: model.Product,
+                as: "product",
+                attributes: ["id", "name", "sku"],
+            },
+        ],
+    });
+};
+
+
+
 export {
     findInventory,
     createInventory,
@@ -81,4 +112,5 @@ export {
     getOneInventory,
     updateInventory,
     deleteInventory,
+    getLowStockInventory
 };

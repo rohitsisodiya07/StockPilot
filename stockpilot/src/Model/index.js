@@ -5,6 +5,8 @@ import UserWarehouse from "./userWarehouseModel";
 import Product from "./productModel";
 import Inventory from "./inventoryModel";
 import StockMovement from "./stockMovementModel";
+import Supplier from "./supplierModel";
+import PurchaseOrder from "./purchaseOrderModel";
 
 //Role->User
 Role.hasMany(User, { foreignKey: "roleId", as: "users", });
@@ -58,5 +60,7 @@ export {
     UserWarehouse,
     Product,
     Inventory,
-    StockMovement
+    StockMovement,
+    Supplier,
+    PurchaseOrder
 };

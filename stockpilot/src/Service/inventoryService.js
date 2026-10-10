@@ -120,9 +120,28 @@ const deleteInventory = async (userId, roleId, id) => {
 };
 
 
+const getLowStockInventory = async (userId, roleId, warehouseId) => {
+    const warehouse = await warehouseRepository.getOneWarehouse(warehouseId);
+
+    if (!warehouse) {
+        throw new Error("Warehouse Not Found");
+    }
+
+    await userWarehouseService.checkWarehouseAccess(
+        userId,
+        roleId,
+        warehouseId
+    );
+
+    return await inventoryRepository.getLowStockInventory(warehouseId);
+};
+
+
+
 export {
     createInventory,
     getWarehouseInventory,
     updateInventory,
-    deleteInventory
+    deleteInventory,
+    getLowStockInventory
 };

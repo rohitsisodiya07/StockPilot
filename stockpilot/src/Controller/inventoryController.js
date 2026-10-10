@@ -163,10 +163,39 @@ const deleteInventory = async (user, id) => {
 };
 
 
+const getLowStockInventory = async (user, warehouseId) => {
+    try {
+        const data = await inventoryService.getLowStockInventory(
+            user.id,
+            user.roleId,
+            Number(warehouseId)
+        );
+
+        return Response.json({
+            success: true,
+            message: "Low Stock Inventory Fetched Successfully",
+            data,
+        });
+    } catch (error) {
+        const status = error.message.includes("Access Denied")
+            ? 403
+            : error.message.includes("Not Found")
+                ? 404
+                : 400;
+
+        return Response.json(
+            { success: false, message: error.message },
+            { status }
+        );
+    }
+};
+
+
 
 export {
     createInventory,
     getWarehouseInventory,
     updateInventory,
-    deleteInventory
+    deleteInventory,
+    getLowStockInventory
 };
