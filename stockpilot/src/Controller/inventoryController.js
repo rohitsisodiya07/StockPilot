@@ -87,7 +87,86 @@ const getWarehouseInventory = async (user, warehouseId) => {
     }
 };
 
+
+const updateInventory = async (request, user, id) => {
+    try {
+        const body = await request.json();
+
+        const inventory = await inventoryService.updateInventory(
+            user.id,
+            user.roleId,
+            Number(id),
+            {
+                quantity: body.quantity === undefined ? undefined : Number(body.quantity),
+                reorderLevel: body.reorderLevel === undefined ? undefined : Number(body.reorderLevel),
+            }
+        );
+
+        return Response.json(
+            {
+                success: true,
+                message: "Inventory Updated Successfully",
+                data: inventory,
+            },
+            { status: 200 }
+        );
+
+    } catch (error) {
+        console.error("Update Inventory Error:", error);
+
+        const status =
+            error.message.includes("Access Denied") ? 403 :
+                error.message === "Inventory Not Found" ? 404 : 400;
+
+        return Response.json(
+            {
+                success: false,
+                message: error.message,
+            },
+            { status }
+        );
+    }
+};
+
+
+const deleteInventory = async (user, id) => {
+    try {
+        await inventoryService.deleteInventory(
+            user.id,
+            user.roleId,
+            Number(id)
+        );
+
+        return Response.json(
+            {
+                success: true,
+                message: "Inventory Deleted Successfully",
+            },
+            { status: 200 }
+        );
+
+    } catch (error) {
+        console.error("Delete Inventory Error:", error);
+
+        const status =
+            error.message.includes("Access Denied") ? 403 :
+                error.message === "Inventory Not Found" ? 404 : 400;
+
+        return Response.json(
+            {
+                success: false,
+                message: error.message,
+            },
+            { status }
+        );
+    }
+};
+
+
+
 export {
     createInventory,
     getWarehouseInventory,
+    updateInventory,
+    deleteInventory
 };

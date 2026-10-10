@@ -103,8 +103,26 @@ const updateInventory = async (userId, roleId, id, data) => {
 };
 
 
+const deleteInventory = async (userId, roleId, id) => {
+    const inventory = await inventoryRepository.getOneInventory(id);
+
+    if (!inventory) {
+        throw new Error("Inventory Not Found");
+    }
+
+    await userWarehouseService.checkWarehouseAccess(
+        userId,
+        roleId,
+        inventory.warehouseId
+    );
+
+    return await inventoryRepository.deleteInventory(id);
+};
+
+
 export {
     createInventory,
     getWarehouseInventory,
-    updateInventory
+    updateInventory,
+    deleteInventory
 };

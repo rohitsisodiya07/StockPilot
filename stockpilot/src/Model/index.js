@@ -4,6 +4,7 @@ import Warehouse from "./warehouseModel";
 import UserWarehouse from "./userWarehouseModel";
 import Product from "./productModel";
 import Inventory from "./inventoryModel";
+import StockMovement from "./stockMovementModel";
 
 //Role->User
 Role.hasMany(User, { foreignKey: "roleId", as: "users", });
@@ -36,11 +37,26 @@ Warehouse.hasMany(Inventory, { foreignKey: "warehouseId", as: "inventory", });
 Inventory.belongsTo(Warehouse, { foreignKey: "warehouseId", as: "warehouse", });
 
 
+//Allows one inventory record to have multiple stock movement records.
+Inventory.hasMany(StockMovement, { foreignKey: "inventoryId", as: "stockMovements", });
+
+//Links each stock movement to its inventory record.
+StockMovement.belongsTo(Inventory, { foreignKey: "inventoryId", as: "inventory", });
+
+//Allows one user to perform multiple stock movements.
+User.hasMany(StockMovement, { foreignKey: "userId", as: "stockMovements", });
+
+//Identifies the user who performed a stock movement.
+StockMovement.belongsTo(User, { foreignKey: "userId", as: "user", });
+
+
+
 export {
     Role,
     User,
     Warehouse,
     UserWarehouse,
     Product,
-    Inventory
+    Inventory,
+    StockMovement
 };
