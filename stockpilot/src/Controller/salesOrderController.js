@@ -38,26 +38,50 @@ const createSalesOrder = async (request, user) => {
     }
 };
 
-
 const getAllSalesOrders = async (request, user) => {
     try {
         const { searchParams } = new URL(request.url);
-        const status = searchParams.get("status");
 
-        const data = await salesOrderService.getAllSalesOrders(
+        const status = searchParams.get("status");
+        const search = searchParams.get("search");
+        const page = searchParams.get("page") || 1;
+        const limit = searchParams.get("limit") || 10;
+        const startDate = searchParams.get("startDate");
+        const endDate = searchParams.get("endDate");
+        const sortOrder = searchParams.get("sortOrder") || "DESC";
+        const sortBy = searchParams.get("sortBy") || "createdAt";
+
+        const result = await salesOrderService.getAllSalesOrders(
             user.id,
             user.roleId,
-            status
+            status,
+            search,
+            page,
+            limit,
+            startDate,
+            endDate,
+            sortBy,
+            sortOrder
         );
 
         return Response.json({
             success: true,
             message: "Sales Orders Fetched Successfully",
-            data,
+            data: result.data,
+            pagination: result.pagination,
         });
+
     } catch (error) {
-        const statusCode =
-            error.message === "Invalid Sales Order Status" ? 400 : 500;
+
+        const statusCode = [
+            "Invalid Sales Order Status",
+            "Invalid Start Date",
+            "Invalid End Date",
+            "Start Date Cannot Be After End Date",
+            "Invalid Sort Order",
+            "Invalid Sort Field",
+        ].includes(error.message) ? 400 : 500;
+
 
         return Response.json({
             success: false,

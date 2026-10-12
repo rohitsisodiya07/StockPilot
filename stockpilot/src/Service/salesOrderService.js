@@ -33,8 +33,18 @@ const createSalesOrder = async (userId, roleId, data) => {
 };
 
 
-
-const getAllSalesOrders = async (userId, roleId, status = null) => {
+const getAllSalesOrders = async (
+    userId,
+    roleId,
+    status = null,
+    search = null,
+    page = 1,
+    limit = 10,
+    startDate = null,
+    endDate = null,
+    sortBy = "createdAt",
+    sortOrder = "DESC"
+) => {
     const allowedStatuses = [
         "DRAFT",
         "CONFIRMED",
@@ -46,32 +56,83 @@ const getAllSalesOrders = async (userId, roleId, status = null) => {
         throw new Error("Invalid Sales Order Status");
     }
 
+    const isValidDate = (value) =>
+        /^\d{4}-\d{2}-\d{2}$/.test(value) &&
+        !Number.isNaN(Date.parse(value)) &&
+        new Date(value).toISOString().slice(0, 10) === value;
+
+    if (startDate && !isValidDate(startDate)) {
+        throw new Error("Invalid Start Date");
+    }
+
+    if (endDate && !isValidDate(endDate)) {
+        throw new Error("Invalid End Date");
+    }
+
+    if (startDate && endDate && startDate > endDate) {
+        throw new Error("Start Date Cannot Be After End Date");
+    }
+    if (!["ASC", "DESC"].includes(sortOrder.toUpperCase())) {
+        throw new Error("Invalid Sort Order");
+    }
+
+    const allowedSortFields = ["createdAt", "customerName", "status"];
+
+    if (!allowedSortFields.includes(sortBy)) {
+        throw new Error("Invalid Sort Field");
+    }
+    sortOrder = sortOrder.toUpperCase();
+
+    page = Math.max(1, Number(page) || 1);
+    limit = Math.min(100, Math.max(1, Number(limit) || 10));
+
+    const offset = (page - 1) * limit;
+
     let warehouseIds = null;
 
     if (roleId !== 1) {
-        const warehouses = await userWarehouseService.getUserWarehouses(userId);
+        const warehouses =
+            await userWarehouseService.getUserWarehouses(userId);
+
         warehouseIds = warehouses.map((item) => item.warehouseId);
     }
 
-    const salesOrders = await salesOrderRepository.getAllSalesOrders(
+    const result = await salesOrderRepository.getAllSalesOrders(
         warehouseIds,
-        status
+        status,
+        search,
+        limit,
+        offset,
+        startDate,
+        endDate,
+        sortBy,
+        sortOrder
     );
 
-    return salesOrders.map((order) => {
-        const data = order.toJSON();
+    const data = result.rows.map((order) => {
+        const orderData = order.toJSON();
 
-        const totalAmount = data.items.reduce(
+        const totalAmount = orderData.items.reduce(
             (total, item) =>
                 total + item.quantity * Number(item.unitPrice),
             0
         );
 
         return {
-            ...data,
+            ...orderData,
             totalAmount: Number(totalAmount.toFixed(2)),
         };
     });
+
+    return {
+        data,
+        pagination: {
+            page,
+            limit,
+            totalRecords: result.count,
+            totalPages: Math.ceil(result.count / limit),
+        },
+    };
 };
 
 
@@ -102,7 +163,6 @@ const getOneSalesOrder = async (userId, roleId, id) => {
         totalAmount: Number(totalAmount.toFixed(2)),
     };
 };
-
 
 
 const updateSalesOrderStatus = async (
@@ -149,7 +209,6 @@ const updateSalesOrderStatus = async (
         status,
     });
 };
-
 
 
 const dispatchSalesOrder = async (userId, roleId, id) => {

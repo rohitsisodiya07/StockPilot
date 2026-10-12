@@ -6,7 +6,18 @@ const createSalesOrder = async (data) => {
 };
 
 
-const getAllSalesOrders = async (warehouseIds = null, status = null) => {
+const getAllSalesOrders = async (
+    warehouseIds = null,
+    warehouseId = null,
+    status = null,
+    search = null,
+    limit = 10,
+    offset = 0,
+    startDate = null,
+    endDate = null,
+    sortBy = "createdAt",
+    sortOrder = "DESC",
+) => {
     const where = {};
 
     if (warehouseIds !== null) {
@@ -19,7 +30,27 @@ const getAllSalesOrders = async (warehouseIds = null, status = null) => {
         where.status = status;
     }
 
-    return await model.SalesOrder.findAll({
+    if (search) {
+        where.customerName = {
+            [Op.like]: `%${search}%`,
+        };
+    }
+    if (startDate || endDate) {
+        where.createdAt = {};
+
+        if (startDate) {
+            where.createdAt[Op.gte] = new Date(startDate);
+        }
+
+        if (endDate) {
+            const nextDay = new Date(endDate);
+            nextDay.setDate(nextDay.getDate() + 1);
+
+            where.createdAt[Op.lt] = nextDay;
+        }
+    }
+
+    return await model.SalesOrder.findAndCountAll({
         where,
         include: [
             {
@@ -32,15 +63,16 @@ const getAllSalesOrders = async (warehouseIds = null, status = null) => {
                 as: "creator",
                 attributes: ["id", "name", "email"],
             },
-
             {
                 model: model.SalesOrderItem,
                 as: "items",
                 attributes: ["id", "quantity", "unitPrice"],
-            }
-
+            },
         ],
-        order: [["createdAt", "DESC"]],
+        distinct: true,
+        order: [[sortBy, sortOrder]],
+        limit,
+        offset,
     });
 };
 
