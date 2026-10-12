@@ -50,6 +50,7 @@ const getAllSalesOrders = async (request, user) => {
         const endDate = searchParams.get("endDate");
         const sortOrder = searchParams.get("sortOrder") || "DESC";
         const sortBy = searchParams.get("sortBy") || "createdAt";
+        const warehouseId = searchParams.get("warehouseId");
 
         const result = await salesOrderService.getAllSalesOrders(
             user.id,
@@ -61,7 +62,8 @@ const getAllSalesOrders = async (request, user) => {
             startDate,
             endDate,
             sortBy,
-            sortOrder
+            sortOrder,
+            warehouseId
         );
 
         return Response.json({
@@ -80,8 +82,14 @@ const getAllSalesOrders = async (request, user) => {
             "Start Date Cannot Be After End Date",
             "Invalid Sort Order",
             "Invalid Sort Field",
-        ].includes(error.message) ? 400 : 500;
-
+            "Invalid Warehouse ID",
+        ].includes(error.message)
+            ? 400
+            : error.message === "Warehouse Not Found"
+                ? 404
+                : error.message.includes("Access Denied")
+                    ? 403
+                    : 500;
 
         return Response.json({
             success: false,

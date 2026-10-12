@@ -25,15 +25,27 @@ const getAllSalesOrders = async (
             [Op.in]: warehouseIds,
         };
     }
+    if (warehouseId !== null) {
+        where.warehouseId = warehouseId;
+    }
 
     if (status) {
         where.status = status;
     }
 
     if (search) {
-        where.customerName = {
-            [Op.like]: `%${search}%`,
-        };
+        where[Op.or] = [
+            {
+                customerName: {
+                    [Op.like]: `%${search}%`,
+                },
+            },
+            {
+                customerEmail: {
+                    [Op.like]: `%${search}%`,
+                },
+            },
+        ];
     }
     if (startDate || endDate) {
         where.createdAt = {};

@@ -43,7 +43,8 @@ const getAllSalesOrders = async (
     startDate = null,
     endDate = null,
     sortBy = "createdAt",
-    sortOrder = "DESC"
+    sortOrder = "DESC",
+    warehouseId = null
 ) => {
     const allowedStatuses = [
         "DRAFT",
@@ -96,9 +97,29 @@ const getAllSalesOrders = async (
 
         warehouseIds = warehouses.map((item) => item.warehouseId);
     }
+    if (warehouseId !== null) {
+        warehouseId = Number(warehouseId);
+
+        if (!Number.isInteger(warehouseId) || warehouseId <= 0) {
+            throw new Error("Invalid Warehouse ID");
+        }
+
+        const warehouse = await warehouseRepository.getOneWarehouse(warehouseId);
+
+        if (!warehouse) {
+            throw new Error("Warehouse Not Found");
+        }
+
+        await userWarehouseService.checkWarehouseAccess(
+            userId,
+            roleId,
+            warehouseId
+        );
+    }
 
     const result = await salesOrderRepository.getAllSalesOrders(
         warehouseIds,
+        warehouseId,
         status,
         search,
         limit,
