@@ -7,6 +7,9 @@ import Inventory from "./inventoryModel";
 import StockMovement from "./stockMovementModel";
 import Supplier from "./supplierModel";
 import PurchaseOrder from "./purchaseOrderModel";
+import PurchaseOrderItem from "./purchaseOrderItemModel";
+import SalesOrder from "./salesOrderModel";
+import SalesOrderItem from "./salesOrderItemModel";
 
 //Role->User
 Role.hasMany(User, { foreignKey: "roleId", as: "users", });
@@ -51,6 +54,54 @@ User.hasMany(StockMovement, { foreignKey: "userId", as: "stockMovements", });
 //Identifies the user who performed a stock movement.
 StockMovement.belongsTo(User, { foreignKey: "userId", as: "user", });
 
+// One purchase order can contain multiple items.
+PurchaseOrder.hasMany(PurchaseOrderItem, { foreignKey: "purchaseOrderId", as: "items", });
+
+//Links an item to its purchase order.
+PurchaseOrderItem.belongsTo(PurchaseOrder, { foreignKey: "purchaseOrderId", as: "purchaseOrder", });
+
+//One product can appear in multiple purchase orders.
+Product.hasMany(PurchaseOrderItem, { foreignKey: "productId", as: "purchaseOrderItems", });
+
+//Retrieves product details for an order item.
+PurchaseOrderItem.belongsTo(Product, { foreignKey: "productId", as: "product", });
+
+//Current model belongs to another model
+PurchaseOrder.belongsTo(Supplier, { foreignKey: "supplierId", as: "supplier", });
+
+//One record can have multiple related records
+Supplier.hasMany(PurchaseOrder, { foreignKey: "supplierId", as: "purchaseOrders", });
+
+//One record has one related record
+PurchaseOrder.belongsTo(Warehouse, { foreignKey: "warehouseId", as: "warehouse", });
+
+//Models relate through a junction table
+PurchaseOrder.belongsTo(User, { foreignKey: "createdBy", as: "creator", });
+
+//Har Sales Order ek particular warehouse se belong karta hai
+SalesOrder.belongsTo(Warehouse, { foreignKey: "warehouseId", as: "warehouse", });
+
+//Ek warehouse mein multiple Sales Orders ho sakte hain.
+Warehouse.hasMany(SalesOrder, { foreignKey: "warehouseId", as: "salesOrders", });
+
+//Pata chalta hai ki Sales Order kis user ne create kiya.
+SalesOrder.belongsTo(User, { foreignKey: "createdBy", as: "creator", });
+
+//k record ke multiple related records ho sakte hain
+User.hasMany(SalesOrder, { foreignKey: "createdBy", as: "salesOrders", });
+
+//One order can contain multiple products.
+SalesOrder.hasMany(SalesOrderItem, { foreignKey: "salesOrderId", as: "items", });
+
+//Each item belongs to one order.
+SalesOrderItem.belongsTo(SalesOrder, { foreignKey: "salesOrderId", as: "salesOrder", });
+
+//A product can appear in multiple orders
+Product.hasMany(SalesOrderItem, { foreignKey: "productId", as: "salesOrderItems", });
+
+//Each order item refers to one product
+SalesOrderItem.belongsTo(Product, { foreignKey: "productId", as: "product", });
+
 
 
 export {
@@ -62,5 +113,8 @@ export {
     Inventory,
     StockMovement,
     Supplier,
-    PurchaseOrder
+    PurchaseOrder,
+    PurchaseOrderItem,
+    SalesOrder,
+    SalesOrderItem
 };
