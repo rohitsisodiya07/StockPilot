@@ -23,7 +23,9 @@ const authMiddleware = async (request) => {
             process.env.JWT_SECRET
         );
 
-        console.log("DECODED:", decoded);
+        console.log("DECODED USER:", decoded);
+        console.log("USER ROLE ID:", decoded.roleId);
+
 
         return decoded;
 

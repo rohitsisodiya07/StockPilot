@@ -2,7 +2,47 @@ export const runtime = "nodejs";
 
 import connectDB from "@/lib/db/connectDB";
 import authMiddleware from "@/Middleware/authMiddleware";
-import { getOneSalesOrder, updateSalesOrderStatus, dispatchSalesOrder } from "@/Controller/salesOrderController";
+import {
+    getOneSalesOrder,
+    updateSalesOrderStatus,
+    dispatchSalesOrder,
+} from "@/Controller/salesOrderController";
+
+const parseOrderId = (id) => {
+    const orderId = Number(id);
+
+    if (!Number.isInteger(orderId) || orderId <= 0) {
+        return null;
+    }
+
+    return orderId;
+};
+
+const handleError = (error) => {
+    console.error("Sales Order API Error:", error);
+
+    const isAuthError =
+        error?.message === "Invalid or Expired Token";
+
+    return Response.json(
+        {
+            success: false,
+            message: isAuthError
+                ? "Invalid or Expired Token"
+                : "Internal Server Error",
+        },
+        { status: isAuthError ? 401 : 500 }
+    );
+};
+
+const invalidIdResponse = () =>
+    Response.json(
+        {
+            success: false,
+            message: "Invalid Sales Order ID",
+        },
+        { status: 400 }
+    );
 
 export async function GET(request, { params }) {
     try {
@@ -10,24 +50,17 @@ export async function GET(request, { params }) {
 
         const user = await authMiddleware(request);
         const { id } = await params;
+        const orderId = parseOrderId(id);
 
-        return await getOneSalesOrder(user, Number(id));
+        if (orderId === null) {
+            return invalidIdResponse();
+        }
+
+        return await getOneSalesOrder(user, orderId);
+    } catch (error) {
+        return handleError(error);
     }
-    catch (error) {
-        const status =
-            error.message === "Invalid or Expired Token" ? 401 : 500;
-
-        return Response.json(
-            {
-                success: false,
-                message: error.message,
-            },
-            { status }
-        );
-    }
-
 }
-
 
 export async function PATCH(request, { params }) {
     try {
@@ -35,28 +68,21 @@ export async function PATCH(request, { params }) {
 
         const user = await authMiddleware(request);
         const { id } = await params;
+        const orderId = parseOrderId(id);
+
+        if (orderId === null) {
+            return invalidIdResponse();
+        }
 
         return await updateSalesOrderStatus(
             request,
             user,
-            Number(id)
+            orderId
         );
+    } catch (error) {
+        return handleError(error);
     }
-    catch (error) {
-        const status =
-            error.message === "Invalid or Expired Token" ? 401 : 500;
-
-        return Response.json(
-            {
-                success: false,
-                message: error.message,
-            },
-            { status }
-        );
-    }
-
 }
-
 
 export async function POST(request, { params }) {
     try {
@@ -64,20 +90,14 @@ export async function POST(request, { params }) {
 
         const user = await authMiddleware(request);
         const { id } = await params;
+        const orderId = parseOrderId(id);
 
-        return await dispatchSalesOrder(user, Number(id));
+        if (orderId === null) {
+            return invalidIdResponse();
+        }
+
+        return await dispatchSalesOrder(user, orderId);
+    } catch (error) {
+        return handleError(error);
     }
-    catch (error) {
-        const status =
-            error.message === "Invalid or Expired Token" ? 401 : 500;
-
-        return Response.json(
-            {
-                success: false,
-                message: error.message,
-            },
-            { status }
-        );
-    }
-
 }

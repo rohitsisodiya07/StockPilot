@@ -153,23 +153,23 @@ const createUser = async (request) => {
     }
 };
 
+
 const loginUser = async (request) => {
     try {
         const body = await request.json();
-
         const { email, password } = body;
 
-        if (!email || !email.trim()) {
+        if (!email || typeof email !== "string" || !email.trim()) {
             return Response.json(
                 {
                     success: false,
-                    message: "Email is Required",
+                    message: "Valid Email is Required",
                 },
                 { status: 400 }
             );
         }
 
-        if (!password) {
+        if (typeof password !== "string" || !password) {
             return Response.json(
                 {
                     success: false,
@@ -196,12 +196,25 @@ const loginUser = async (request) => {
     } catch (error) {
         console.error("Login User Error:", error);
 
+        if (
+            error.message === "Invalid Email or Password" ||
+            error.message === "User Not Found"
+        ) {
+            return Response.json(
+                {
+                    success: false,
+                    message: "Invalid Email or Password",
+                },
+                { status: 401 }
+            );
+        }
+
         return Response.json(
             {
                 success: false,
-                message: error.message,
+                message: "Internal Server Error",
             },
-            { status: 401 }
+            { status: 500 }
         );
     }
 };

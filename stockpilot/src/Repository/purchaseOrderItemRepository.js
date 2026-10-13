@@ -1,10 +1,15 @@
 import * as model from "@/Model/index";
 
-const createPurchaseOrderItem = async (data, transaction) => {
-    return await model.PurchaseOrderItem.create(data, { transaction });
+const createPurchaseOrderItem = async (data, transaction = undefined) => {
+    return await model.PurchaseOrderItem.create(data, {
+        ...(transaction ? { transaction } : {}),
+    });
 };
 
-const getPurchaseOrderItems = async (purchaseOrderId) => {
+const getPurchaseOrderItems = async (
+    purchaseOrderId,
+    transaction = undefined
+) => {
     return await model.PurchaseOrderItem.findAll({
         where: { purchaseOrderId },
         include: [
@@ -15,10 +20,14 @@ const getPurchaseOrderItems = async (purchaseOrderId) => {
             },
         ],
         order: [["id", "ASC"]],
+        ...(transaction ? { transaction } : {}),
     });
 };
 
-const getOnePurchaseOrderItem = async (id) => {
+const getOnePurchaseOrderItem = async (
+    id,
+    transaction = undefined
+) => {
     return await model.PurchaseOrderItem.findByPk(id, {
         include: [
             {
@@ -27,15 +36,22 @@ const getOnePurchaseOrderItem = async (id) => {
                 attributes: ["id", "name", "sku", "price"],
             },
         ],
+        ...(transaction ? { transaction } : {}),
     });
 };
 
-const deletePurchaseOrderItem = async (id, transaction) => {
-    const item = await model.PurchaseOrderItem.findByPk(id, { transaction });
+const deletePurchaseOrderItem = async (id, transaction = undefined) => {
+    const item = await model.PurchaseOrderItem.findByPk(id, {
+        ...(transaction ? { transaction } : {}),
+    });
 
-    if (!item) return null;
+    if (!item) {
+        return null;
+    }
 
-    return await item.destroy({ transaction });
+    return await item.destroy({
+        ...(transaction ? { transaction } : {}),
+    });
 };
 
 export {

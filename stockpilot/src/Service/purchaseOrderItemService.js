@@ -11,61 +11,100 @@ const createPurchaseOrderItem = async (
 ) => {
     const { productId, quantity, unitPrice } = data;
 
-    if (!productId || !Number.isInteger(quantity) || quantity <= 0) {
-        throw new Error("Valid Product and Quantity Are Required");
+    // Validate purchase order ID
+    if (!Number.isInteger(purchaseOrderId) || purchaseOrderId <= 0) {
+        throw new Error("Valid Purchase Order ID Is Required");
     }
 
-    if (unitPrice === undefined || !Number.isFinite(Number(unitPrice)) || Number(unitPrice) < 0) {
+    // Validate product ID
+    if (!Number.isInteger(productId) || productId <= 0) {
+        throw new Error("Valid Product ID Is Required");
+    }
+
+    // Validate quantity
+    if (!Number.isInteger(quantity) || quantity <= 0) {
+        throw new Error("Quantity Must Be A Positive Integer");
+    }
+
+    // Validate unit price
+    const parsedUnitPrice = Number(unitPrice);
+
+    if (
+        unitPrice === undefined ||
+        unitPrice === null ||
+        unitPrice === "" ||
+        !Number.isFinite(parsedUnitPrice) ||
+        parsedUnitPrice < 0
+    ) {
         throw new Error("Valid Unit Price Is Required");
     }
 
-    const purchaseOrder = await purchaseOrderRepository.getOnePurchaseOrder(
-        purchaseOrderId
-    );
+    // Check purchase order
+    const purchaseOrder =
+        await purchaseOrderRepository.getOnePurchaseOrder(
+            purchaseOrderId
+        );
 
     if (!purchaseOrder) {
         throw new Error("Purchase Order Not Found");
     }
 
+    // Items can only be added to draft orders
     if (purchaseOrder.status !== "DRAFT") {
         throw new Error("Items Can Only Be Added To Draft Orders");
     }
 
+    // Check warehouse access
     await userWarehouseService.checkWarehouseAccess(
         userId,
         roleId,
         purchaseOrder.warehouseId
     );
 
+    // Check product
     const product = await productRepository.getOneProduct(productId);
 
     if (!product) {
         throw new Error("Product Not Found");
     }
 
+    // Create purchase order item
     return await purchaseOrderItemRepository.createPurchaseOrderItem({
         purchaseOrderId,
         productId,
         quantity,
-        unitPrice: Number(unitPrice),
+        unitPrice: parsedUnitPrice,
     });
 };
 
-const getPurchaseOrderItems = async (userId, roleId, purchaseOrderId) => {
-    const purchaseOrder = await purchaseOrderRepository.getOnePurchaseOrder(
-        purchaseOrderId
-    );
+const getPurchaseOrderItems = async (
+    userId,
+    roleId,
+    purchaseOrderId
+) => {
+    // Validate purchase order ID
+    if (!Number.isInteger(purchaseOrderId) || purchaseOrderId <= 0) {
+        throw new Error("Valid Purchase Order ID Is Required");
+    }
+
+    // Check purchase order
+    const purchaseOrder =
+        await purchaseOrderRepository.getOnePurchaseOrder(
+            purchaseOrderId
+        );
 
     if (!purchaseOrder) {
         throw new Error("Purchase Order Not Found");
     }
 
+    // Check warehouse access
     await userWarehouseService.checkWarehouseAccess(
         userId,
         roleId,
         purchaseOrder.warehouseId
     );
 
+    // Fetch purchase order items
     return await purchaseOrderItemRepository.getPurchaseOrderItems(
         purchaseOrderId
     );

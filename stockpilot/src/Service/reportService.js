@@ -2,48 +2,95 @@ import * as reportRepository from "@/Repository/reportRepository";
 import * as userWarehouseService from "@/Service/userWarehouseService";
 import * as warehouseRepository from "@/Repository/warehouseRepository";
 
-const getSalesSummary = async (
-    userId,
-    roleId,
-    startDate = null,
-    endDate = null,
-    warehouseId = null
-) => {
-    const isValidDate = (value) =>
-        /^\d{4}-\d{2}-\d{2}$/.test(value) &&
-        !Number.isNaN(Date.parse(value)) &&
-        new Date(value).toISOString().slice(0, 10) === value;
+// -------------------- Common Helpers --------------------
 
-    if (startDate && !isValidDate(startDate)) {
+const isValidDate = (value) => {
+    if (
+        typeof value !== "string" ||
+        !/^\d{4}-\d{2}-\d{2}$/.test(value)
+    ) {
+        return false;
+    }
+
+    const date = new Date(`${value}T00:00:00.000Z`);
+
+    return (
+        !Number.isNaN(date.getTime()) &&
+        date.toISOString().slice(0, 10) === value
+    );
+};
+
+const validateDateRange = (startDate, endDate) => {
+    if (startDate !== null && !isValidDate(startDate)) {
         throw new Error("Invalid Start Date");
     }
 
-    if (endDate && !isValidDate(endDate)) {
+    if (endDate !== null && !isValidDate(endDate)) {
         throw new Error("Invalid End Date");
     }
 
     if (startDate && endDate && startDate > endDate) {
         throw new Error("Start Date Cannot Be After End Date");
     }
+};
 
+const getWarehouseFilter = async (
+    userId,
+    roleId,
+    warehouseId = null
+) => {
+    // Admin can access all warehouses.
+    // Other users can access only their assigned warehouses.
     let warehouseIds = null;
 
-    if (roleId !== 1) {
+    if (Number(roleId) !== 1) {
         const warehouses =
             await userWarehouseService.getUserWarehouses(userId);
 
-        warehouseIds = warehouses.map((item) => item.warehouseId);
+        warehouseIds = warehouses.map(
+            (item) => Number(item.warehouseId)
+        );
+
+        // Explicitly return no results for users with no assignments.
+        if (warehouseIds.length === 0) {
+            if (warehouseId !== null) {
+                const requestedId = Number(warehouseId);
+
+                if (
+                    !Number.isInteger(requestedId) ||
+                    requestedId <= 0
+                ) {
+                    throw new Error("Invalid Warehouse ID");
+                }
+
+                const warehouse =
+                    await warehouseRepository.getOneWarehouse(
+                        requestedId
+                    );
+
+                if (!warehouse) {
+                    throw new Error("Warehouse Not Found");
+                }
+
+                throw new Error("Access Denied: Warehouse Access");
+            }
+
+            return [];
+        }
     }
 
     if (warehouseId !== null) {
-        warehouseId = Number(warehouseId);
+        const requestedId = Number(warehouseId);
 
-        if (!Number.isInteger(warehouseId) || warehouseId <= 0) {
+        if (
+            !Number.isInteger(requestedId) ||
+            requestedId <= 0
+        ) {
             throw new Error("Invalid Warehouse ID");
         }
 
         const warehouse =
-            await warehouseRepository.getOneWarehouse(warehouseId);
+            await warehouseRepository.getOneWarehouse(requestedId);
 
         if (!warehouse) {
             throw new Error("Warehouse Not Found");
@@ -52,12 +99,46 @@ const getSalesSummary = async (
         await userWarehouseService.checkWarehouseAccess(
             userId,
             roleId,
-            warehouseId
+            requestedId
         );
 
-        warehouseIds = [warehouseId];
+        warehouseIds = [requestedId];
     }
 
+    return warehouseIds;
+};
+
+// -------------------- Sales Summary --------------------
+
+const getSalesSummary = async (
+    userId,
+    roleId,
+    startDate = null,
+    endDate = null,
+    warehouseId = null
+) => {
+    validateDateRange(startDate, endDate);
+
+    const warehouseIds = await getWarehouseFilter(
+        userId,
+        roleId,
+        warehouseId
+    );
+
+    if (Array.isArray(warehouseIds) && warehouseIds.length === 0) {
+        return {
+            totalOrders: 0,
+            statusCounts: {
+                DRAFT: 0,
+                CONFIRMED: 0,
+                DISPATCHED: 0,
+                CANCELLED: 0,
+            },
+            dispatchedOrders: 0,
+            totalRevenue: 0,
+            averageOrderValue: 0,
+        };
+    }
 
     const orders = await reportRepository.getSalesOrdersForReport(
         warehouseIds,
@@ -65,13 +146,18 @@ const getSalesSummary = async (
         endDate
     );
 
-    const totalOrders = orders.length;
     const statusCounts = {
-        DRAFT: orders.filter((order) => order.status === "DRAFT").length,
-        CONFIRMED: orders.filter((order) => order.status === "CONFIRMED").length,
-        DISPATCHED: orders.filter((order) => order.status === "DISPATCHED").length,
-        CANCELLED: orders.filter((order) => order.status === "CANCELLED").length,
+        DRAFT: 0,
+        CONFIRMED: 0,
+        DISPATCHED: 0,
+        CANCELLED: 0,
     };
+
+    for (const order of orders) {
+        if (Object.hasOwn(statusCounts, order.status)) {
+            statusCounts[order.status]++;
+        }
+    }
 
     const dispatchedOrders = orders.filter(
         (order) => order.status === "DISPATCHED"
@@ -80,7 +166,7 @@ const getSalesSummary = async (
     const totalRevenue = dispatchedOrders.reduce(
         (total, order) =>
             total +
-            order.items.reduce(
+            (order.items || []).reduce(
                 (orderTotal, item) =>
                     orderTotal +
                     Number(item.quantity) * Number(item.unitPrice),
@@ -89,20 +175,22 @@ const getSalesSummary = async (
         0
     );
 
-    const averageOrderValue = dispatchedOrders.length
-        ? totalRevenue / dispatchedOrders.length
-        : 0;
-
     return {
-        totalOrders,
+        totalOrders: orders.length,
         statusCounts,
         dispatchedOrders: dispatchedOrders.length,
         totalRevenue: Number(totalRevenue.toFixed(2)),
-        averageOrderValue: Number(averageOrderValue.toFixed(2)),
+        averageOrderValue: Number(
+            (
+                dispatchedOrders.length
+                    ? totalRevenue / dispatchedOrders.length
+                    : 0
+            ).toFixed(2)
+        ),
     };
 };
 
-
+// -------------------- Warehouse Sales Summary --------------------
 
 const getWarehouseSalesSummary = async (
     userId,
@@ -111,108 +199,55 @@ const getWarehouseSalesSummary = async (
     endDate = null,
     warehouseId = null
 ) => {
-    const isValidDate = (value) =>
-        /^\d{4}-\d{2}-\d{2}$/.test(value) &&
-        !Number.isNaN(Date.parse(value)) &&
-        new Date(value).toISOString().slice(0, 10) === value;
+    validateDateRange(startDate, endDate);
 
-    // Validate dates
-    if (startDate && !isValidDate(startDate)) {
-        throw new Error("Invalid Start Date");
+    const warehouseIds = await getWarehouseFilter(
+        userId,
+        roleId,
+        warehouseId
+    );
+
+    if (Array.isArray(warehouseIds) && warehouseIds.length === 0) {
+        return [];
     }
 
-    if (endDate && !isValidDate(endDate)) {
-        throw new Error("Invalid End Date");
-    }
-
-    if (startDate && endDate && startDate > endDate) {
-        throw new Error("Start Date Cannot Be After End Date");
-    }
-
-    // Get assigned warehouses for non-admin users
-    let warehouseIds = null;
-
-    if (roleId !== 1) {
-        const warehouses =
-            await userWarehouseService.getUserWarehouses(userId);
-
-        warehouseIds = warehouses.map(
-            (item) => item.warehouseId
-        );
-    }
-
-    // Validate and authorize the requested warehouse
-    if (warehouseId !== null) {
-        warehouseId = Number(warehouseId);
-
-        if (!Number.isInteger(warehouseId) || warehouseId <= 0) {
-            throw new Error("Invalid Warehouse ID");
-        }
-
-        const warehouse =
-            await warehouseRepository.getOneWarehouse(warehouseId);
-
-        if (!warehouse) {
-            throw new Error("Warehouse Not Found");
-        }
-
-        await userWarehouseService.checkWarehouseAccess(
-            userId,
-            roleId,
-            warehouseId
-        );
-
-        warehouseIds = [warehouseId];
-    }
-
-    // Fetch sales orders
-    const orders = await reportRepository.getWarehouseSalesReport(
+    const warehouses = await reportRepository.getWarehouseSalesReport(
         warehouseIds,
         startDate,
         endDate
     );
 
-    const warehouseMap = new Map();
+    return warehouses.map((warehouse) => {
+        const orders = warehouse.salesOrders || [];
 
-    // Calculate warehouse-wise statistics
-    for (const order of orders) {
-        const warehouse = order.warehouse;
+        const dispatchedOrders = orders.filter(
+            (order) => order.status === "DISPATCHED"
+        );
 
-        if (!warehouse) continue;
+        const totalRevenue = dispatchedOrders.reduce(
+            (total, order) =>
+                total +
+                (order.items || []).reduce(
+                    (sum, item) =>
+                        sum +
+                        Number(item.quantity) * Number(item.unitPrice),
+                    0
+                ),
+            0
+        );
 
-        if (!warehouseMap.has(warehouse.id)) {
-            warehouseMap.set(warehouse.id, {
-                warehouseId: warehouse.id,
-                warehouseName: warehouse.name,
-                location: warehouse.location,
-                totalOrders: 0,
-                dispatchedOrders: 0,
-                totalRevenue: 0,
-            });
-        }
-
-        const report = warehouseMap.get(warehouse.id);
-
-        report.totalOrders += 1;
-
-        if (order.status === "DISPATCHED") {
-            report.dispatchedOrders += 1;
-
-            report.totalRevenue += order.items.reduce(
-                (total, item) =>
-                    total +
-                    Number(item.quantity) * Number(item.unitPrice),
-                0
-            );
-        }
-    }
-
-    return Array.from(warehouseMap.values()).map((report) => ({
-        ...report,
-        totalRevenue: Number(report.totalRevenue.toFixed(2)),
-    }));
+        return {
+            warehouseId: warehouse.id,
+            warehouseName: warehouse.name,
+            location: warehouse.location,
+            totalOrders: orders.length,
+            dispatchedOrders: dispatchedOrders.length,
+            totalRevenue: Number(totalRevenue.toFixed(2)),
+        };
+    });
 };
 
+// -------------------- Inventory Report --------------------
 
 const getInventoryReport = async (
     userId,
@@ -220,51 +255,30 @@ const getInventoryReport = async (
     warehouseId = null,
     lowStockOnly = false
 ) => {
-    // Get assigned warehouses for non-admin users
-    let warehouseIds = null;
+    const warehouseIds = await getWarehouseFilter(
+        userId,
+        roleId,
+        warehouseId
+    );
 
-    if (roleId !== 1) {
-        const warehouses =
-            await userWarehouseService.getUserWarehouses(userId);
-
-        warehouseIds = warehouses.map(
-            (item) => item.warehouseId
-        );
+    if (Array.isArray(warehouseIds) && warehouseIds.length === 0) {
+        return {
+            totalItems: 0,
+            lowStockItems: 0,
+            data: [],
+        };
     }
 
-    // Validate and authorize a specific warehouse
-    if (warehouseId !== null) {
-        warehouseId = Number(warehouseId);
-
-        if (!Number.isInteger(warehouseId) || warehouseId <= 0) {
-            throw new Error("Invalid Warehouse ID");
-        }
-
-        const warehouse =
-            await warehouseRepository.getOneWarehouse(warehouseId);
-
-        if (!warehouse) {
-            throw new Error("Warehouse Not Found");
-        }
-
-        await userWarehouseService.checkWarehouseAccess(
-            userId,
-            roleId,
-            warehouseId
-        );
-
-        warehouseIds = [warehouseId];
-    }
-
-    // Fetch inventory records
     const inventoryRecords =
         await reportRepository.getInventoryReport(warehouseIds);
 
-    // Calculate low-stock status
     const report = inventoryRecords
         .filter((item) => {
             if (lowStockOnly === true || lowStockOnly === "true") {
-                return Number(item.quantity) <= Number(item.reorderLevel);
+                return (
+                    Number(item.quantity) <=
+                    Number(item.reorderLevel)
+                );
             }
 
             return true;
@@ -290,7 +304,7 @@ const getInventoryReport = async (
     };
 };
 
-
+// -------------------- Stock Movement Summary --------------------
 
 const getStockMovementSummary = async (
     userId,
@@ -300,25 +314,8 @@ const getStockMovementSummary = async (
     startDate = null,
     endDate = null
 ) => {
-    const isValidDate = (value) =>
-        /^\d{4}-\d{2}-\d{2}$/.test(value) &&
-        !Number.isNaN(Date.parse(value)) &&
-        new Date(value).toISOString().slice(0, 10) === value;
+    validateDateRange(startDate, endDate);
 
-    // Validate dates
-    if (startDate && !isValidDate(startDate)) {
-        throw new Error("Invalid Start Date");
-    }
-
-    if (endDate && !isValidDate(endDate)) {
-        throw new Error("Invalid End Date");
-    }
-
-    if (startDate && endDate && startDate > endDate) {
-        throw new Error("Start Date Cannot Be After End Date");
-    }
-
-    // Validate movement type
     if (
         movementType !== null &&
         !["IN", "OUT"].includes(movementType)
@@ -326,72 +323,46 @@ const getStockMovementSummary = async (
         throw new Error("Invalid Movement Type");
     }
 
-    // Get assigned warehouses for non-admin users
-    let warehouseIds = null;
+    const warehouseIds = await getWarehouseFilter(
+        userId,
+        roleId,
+        warehouseId
+    );
 
-    if (roleId !== 1) {
-        const warehouses =
-            await userWarehouseService.getUserWarehouses(userId);
-
-        warehouseIds = warehouses.map(
-            (item) => item.warehouseId
-        );
+    if (Array.isArray(warehouseIds) && warehouseIds.length === 0) {
+        return {
+            totalMovements: 0,
+            totalIn: 0,
+            totalOut: 0,
+            data: [],
+        };
     }
 
-    // Validate and authorize a specific warehouse
-    if (warehouseId !== null) {
-        warehouseId = Number(warehouseId);
-
-        if (!Number.isInteger(warehouseId) || warehouseId <= 0) {
-            throw new Error("Invalid Warehouse ID");
-        }
-
-        const warehouse =
-            await warehouseRepository.getOneWarehouse(warehouseId);
-
-        if (!warehouse) {
-            throw new Error("Warehouse Not Found");
-        }
-
-        await userWarehouseService.checkWarehouseAccess(
-            userId,
-            roleId,
-            warehouseId
-        );
-
-        warehouseIds = [warehouseId];
-    }
-
-    // Fetch stock movements
     const movements =
         await reportRepository.getStockMovementReport(
             warehouseIds,
-            warehouseId,
+            warehouseId === null ? null : Number(warehouseId),
             movementType,
             startDate,
             endDate
         );
 
-    // Format response
     const data = movements.map((movement) => ({
         movementId: movement.id,
         type: movement.type,
         quantity: Number(movement.quantity),
         note: movement.note,
         createdAt: movement.createdAt,
-
         product: {
             id: movement.inventory?.product?.id ?? null,
             name: movement.inventory?.product?.name ?? null,
             sku: movement.inventory?.product?.sku ?? null,
         },
-
         warehouse: {
             id: movement.inventory?.warehouse?.id ?? null,
             name: movement.inventory?.warehouse?.name ?? null,
             location: movement.inventory?.warehouse?.location ?? null,
         },
-
         performedBy: {
             id: movement.user?.id ?? null,
             name: movement.user?.name ?? null,
@@ -399,22 +370,19 @@ const getStockMovementSummary = async (
         },
     }));
 
-    const totalIn = data
-        .filter((item) => item.type === "IN")
-        .reduce((total, item) => total + item.quantity, 0);
-
-    const totalOut = data
-        .filter((item) => item.type === "OUT")
-        .reduce((total, item) => total + item.quantity, 0);
-
     return {
         totalMovements: data.length,
-        totalIn,
-        totalOut,
+        totalIn: data
+            .filter((item) => item.type === "IN")
+            .reduce((total, item) => total + item.quantity, 0),
+        totalOut: data
+            .filter((item) => item.type === "OUT")
+            .reduce((total, item) => total + item.quantity, 0),
         data,
     };
 };
 
+// -------------------- Purchase Summary --------------------
 
 const getPurchaseSummary = async (
     userId,
@@ -424,25 +392,8 @@ const getPurchaseSummary = async (
     startDate = null,
     endDate = null
 ) => {
-    const isValidDate = (value) =>
-        /^\d{4}-\d{2}-\d{2}$/.test(value) &&
-        !Number.isNaN(Date.parse(value)) &&
-        new Date(value).toISOString().slice(0, 10) === value;
+    validateDateRange(startDate, endDate);
 
-    // Validate dates
-    if (startDate && !isValidDate(startDate)) {
-        throw new Error("Invalid Start Date");
-    }
-
-    if (endDate && !isValidDate(endDate)) {
-        throw new Error("Invalid End Date");
-    }
-
-    if (startDate && endDate && startDate > endDate) {
-        throw new Error("Start Date Cannot Be After End Date");
-    }
-
-    // Validate purchase order status
     const validStatuses = [
         "DRAFT",
         "ORDERED",
@@ -454,46 +405,30 @@ const getPurchaseSummary = async (
         throw new Error("Invalid Purchase Order Status");
     }
 
-    // Get assigned warehouses for non-admin users
-    let warehouseIds = null;
+    const warehouseIds = await getWarehouseFilter(
+        userId,
+        roleId,
+        warehouseId
+    );
 
-    if (roleId !== 1) {
-        const warehouses =
-            await userWarehouseService.getUserWarehouses(userId);
-
-        warehouseIds = warehouses.map(
-            (item) => item.warehouseId
-        );
+    if (Array.isArray(warehouseIds) && warehouseIds.length === 0) {
+        return {
+            totalOrders: 0,
+            statusCounts: {
+                DRAFT: 0,
+                ORDERED: 0,
+                RECEIVED: 0,
+                CANCELLED: 0,
+            },
+            receivedOrders: 0,
+            receivedPurchaseValue: 0,
+            data: [],
+        };
     }
 
-    // Validate and authorize a specific warehouse
-    if (warehouseId !== null) {
-        warehouseId = Number(warehouseId);
-
-        if (!Number.isInteger(warehouseId) || warehouseId <= 0) {
-            throw new Error("Invalid Warehouse ID");
-        }
-
-        const warehouse =
-            await warehouseRepository.getOneWarehouse(warehouseId);
-
-        if (!warehouse) {
-            throw new Error("Warehouse Not Found");
-        }
-
-        await userWarehouseService.checkWarehouseAccess(
-            userId,
-            roleId,
-            warehouseId
-        );
-
-        warehouseIds = [warehouseId];
-    }
-
-    // Fetch purchase orders
     const orders = await reportRepository.getPurchaseReport(
         warehouseIds,
-        warehouseId,
+        warehouseId === null ? null : Number(warehouseId),
         status,
         startDate,
         endDate
@@ -509,17 +444,23 @@ const getPurchaseSummary = async (
     let receivedPurchaseValue = 0;
 
     const data = orders.map((order) => {
-        statusCounts[order.status]++;
+        if (Object.hasOwn(statusCounts, order.status)) {
+            statusCounts[order.status]++;
+        }
 
-        const items = (order.items || []).map((item) => ({
-            productId: item.product?.id ?? item.productId,
-            productName: item.product?.name ?? null,
-            sku: item.product?.sku ?? null,
-            quantity: Number(item.quantity),
-            unitPrice: Number(item.unitPrice),
-            subtotal:
-                Number(item.quantity) * Number(item.unitPrice),
-        }));
+        const items = (order.items || []).map((item) => {
+            const quantity = Number(item.quantity);
+            const unitPrice = Number(item.unitPrice);
+
+            return {
+                productId: item.product?.id ?? item.productId,
+                productName: item.product?.name ?? null,
+                sku: item.product?.sku ?? null,
+                quantity,
+                unitPrice,
+                subtotal: Number((quantity * unitPrice).toFixed(2)),
+            };
+        });
 
         const totalValue = items.reduce(
             (total, item) => total + item.subtotal,
@@ -564,6 +505,10 @@ const getPurchaseSummary = async (
     };
 };
 
-
-
-export { getSalesSummary, getWarehouseSalesSummary, getInventoryReport, getStockMovementSummary, getPurchaseSummary };
+export {
+    getSalesSummary,
+    getWarehouseSalesSummary,
+    getInventoryReport,
+    getStockMovementSummary,
+    getPurchaseSummary,
+};

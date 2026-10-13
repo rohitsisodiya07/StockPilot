@@ -7,6 +7,23 @@ import {
     getAllSalesOrders,
 } from "@/Controller/salesOrderController";
 
+const handleError = (error) => {
+    console.error("Sales Order API Error:", error);
+
+    const isAuthError =
+        error?.message === "Invalid or Expired Token";
+
+    return Response.json(
+        {
+            success: false,
+            message: isAuthError
+                ? "Invalid or Expired Token"
+                : "Internal Server Error",
+        },
+        { status: isAuthError ? 401 : 500 }
+    );
+};
+
 export async function POST(request) {
     try {
         await connectDB();
@@ -14,20 +31,9 @@ export async function POST(request) {
         const user = await authMiddleware(request);
 
         return await createSalesOrder(request, user);
+    } catch (error) {
+        return handleError(error);
     }
-    catch (error) {
-        const status =
-            error.message === "Invalid or Expired Token" ? 401 : 500;
-
-        return Response.json(
-            {
-                success: false,
-                message: error.message,
-            },
-            { status }
-        );
-    }
-
 }
 
 export async function GET(request) {
@@ -37,18 +43,7 @@ export async function GET(request) {
         const user = await authMiddleware(request);
 
         return await getAllSalesOrders(request, user);
+    } catch (error) {
+        return handleError(error);
     }
-    catch (error) {
-        const status =
-            error.message === "Invalid or Expired Token" ? 401 : 500;
-
-        return Response.json(
-            {
-                success: false,
-                message: error.message,
-            },
-            { status }
-        );
-    }
-
 }

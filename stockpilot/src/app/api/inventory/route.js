@@ -1,3 +1,4 @@
+
 export const runtime = "nodejs";
 
 import connectDB from "@/lib/db/connectDB";
@@ -10,15 +11,21 @@ export async function POST(request) {
 
         const user = await authMiddleware(request);
 
-        return createInventory(request, user);
-
+        return await createInventory(request, user);
     } catch (error) {
+        console.error("Inventory Route Error:", error);
+
+        const isAuthError =
+            error.message === "Invalid or Expired Token";
+
         return Response.json(
             {
                 success: false,
-                message: error.message,
+                message: isAuthError
+                    ? "Invalid or Expired Token"
+                    : "Internal Server Error",
             },
-            { status: 401 }
+            { status: isAuthError ? 401 : 500 }
         );
     }
 }

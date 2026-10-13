@@ -1,12 +1,63 @@
 import * as roleService from "@/Service/roleService";
 
+const parseRoleId = (id) => {
+    const roleId = Number(id);
+
+    if (!Number.isInteger(roleId) || roleId <= 0) {
+        throw new Error("Invalid Role ID");
+    }
+
+    return roleId;
+};
+
+const handleError = (error, action) => {
+    console.error(`${action} Error:`, error);
+
+    const message = error?.message || "";
+
+    let status = 500;
+
+    if (
+        message === "Invalid Role ID" ||
+        message === "Role Name is Required" ||
+        message === "Invalid Role Name"
+    ) {
+        status = 400;
+    } else if (
+        message === "Role Not Found" ||
+        message === "No Roles Found"
+    ) {
+        status = 404;
+    } else if (
+        message.includes("already exists") ||
+        message.includes("Duplicate") ||
+        message.includes("Validation error")
+    ) {
+        status = 409;
+    }
+
+    return Response.json(
+        {
+            success: false,
+            message:
+                status === 500
+                    ? "Internal Server Error"
+                    : message,
+        },
+        { status }
+    );
+};
+
+// -------------------- Create Role --------------------
+
 const createRole = async (request) => {
     try {
         const body = await request.json();
 
-        const { name } = body;
-
-        if (!name || !name.trim()) {
+        if (
+            typeof body?.name !== "string" ||
+            !body.name.trim()
+        ) {
             return Response.json(
                 {
                     success: false,
@@ -16,9 +67,9 @@ const createRole = async (request) => {
             );
         }
 
-        const role = await roleService.createRole({
-            name: name.trim().toUpperCase(),
-        });
+        const name = body.name.trim().toUpperCase();
+
+        const role = await roleService.createRole({ name });
 
         return Response.json(
             {
@@ -29,67 +80,47 @@ const createRole = async (request) => {
             { status: 201 }
         );
     } catch (error) {
-        console.error("Create Role Error:", error);
-
-        return Response.json(
-            {
-                success: false,
-                message: error.message,
-            },
-            { status: 500 }
-        );
+        return handleError(error, "Create Role");
     }
 };
+
+// -------------------- Get All Roles --------------------
 
 const getAllRoles = async () => {
     try {
         const roles = await roleService.getAllRoles();
 
-        if (!roles || roles.length === 0) {
-            return Response.json(
-                {
-                    success: false,
-                    message: "No Roles Found",
-                    data: [],
-                },
-                { status: 404 }
-            );
-        }
-
         return Response.json(
             {
                 success: true,
-                message: "Roles Fetched Successfully",
+                message: roles.length
+                    ? "Roles Fetched Successfully"
+                    : "No Roles Found",
                 data: roles,
             },
             { status: 200 }
         );
     } catch (error) {
-        console.error("Get Roles Error:", error);
-
-        return Response.json(
-            {
-                success: false,
-                message: error.message,
-            },
-            { status: 500 }
-        );
+        return handleError(error, "Get Roles");
     }
 };
 
+// -------------------- Get One Role --------------------
+
 const getOneRole = async (id) => {
     try {
-        if (!id) {
+        const roleId = parseRoleId(id);
+        const role = await roleService.getOneRole(roleId);
+
+        if (!role) {
             return Response.json(
                 {
                     success: false,
-                    message: "Invalid ID",
+                    message: "Role Not Found",
                 },
-                { status: 400 }
+                { status: 404 }
             );
         }
-
-        const role = await roleService.getOneRole(id);
 
         return Response.json(
             {
@@ -100,25 +131,21 @@ const getOneRole = async (id) => {
             { status: 200 }
         );
     } catch (error) {
-        console.error("Get Role Error:", error);
-
-        return Response.json(
-            {
-                success: false,
-                message: error.message,
-            },
-            { status: 500 }
-        );
+        return handleError(error, "Get Role");
     }
 };
 
+// -------------------- Update Role --------------------
+
 const updateRole = async (request, id) => {
     try {
+        const roleId = parseRoleId(id);
         const body = await request.json();
 
-        const { name } = body;
-
-        if (!name || !name.trim()) {
+        if (
+            typeof body?.name !== "string" ||
+            !body.name.trim()
+        ) {
             return Response.json(
                 {
                     success: false,
@@ -128,9 +155,19 @@ const updateRole = async (request, id) => {
             );
         }
 
-        const role = await roleService.updateRole(id, {
-            name: name.trim().toUpperCase(),
+        const role = await roleService.updateRole(roleId, {
+            name: body.name.trim().toUpperCase(),
         });
+
+        if (!role) {
+            return Response.json(
+                {
+                    success: false,
+                    message: "Role Not Found",
+                },
+                { status: 404 }
+            );
+        }
 
         return Response.json(
             {
@@ -141,21 +178,26 @@ const updateRole = async (request, id) => {
             { status: 200 }
         );
     } catch (error) {
-        console.error("Update Role Error:", error);
-
-        return Response.json(
-            {
-                success: false,
-                message: error.message,
-            },
-            { status: 400 }
-        );
+        return handleError(error, "Update Role");
     }
 };
 
+// -------------------- Delete Role --------------------
+
 const deleteRole = async (id) => {
     try {
-        await roleService.deleteRole(id);
+        const roleId = parseRoleId(id);
+        const role = await roleService.deleteRole(roleId);
+
+        if (!role) {
+            return Response.json(
+                {
+                    success: false,
+                    message: "Role Not Found",
+                },
+                { status: 404 }
+            );
+        }
 
         return Response.json(
             {
@@ -165,15 +207,7 @@ const deleteRole = async (id) => {
             { status: 200 }
         );
     } catch (error) {
-        console.error("Delete Role Error:", error);
-
-        return Response.json(
-            {
-                success: false,
-                message: error.message,
-            },
-            { status: 404 }
-        );
+        return handleError(error, "Delete Role");
     }
 };
 
@@ -182,6 +216,5 @@ export {
     getAllRoles,
     getOneRole,
     updateRole,
-    deleteRole
-
+    deleteRole,
 };

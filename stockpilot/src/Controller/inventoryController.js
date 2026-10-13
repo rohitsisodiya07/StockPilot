@@ -1,12 +1,17 @@
 import * as inventoryService from "@/Service/inventoryService";
 
+
 const createInventory = async (request, user) => {
     try {
         const body = await request.json();
 
         const { productId, warehouseId, quantity, reorderLevel } = body;
 
-        if (!productId || !warehouseId || quantity === undefined || quantity === null) {
+        if (
+            productId === undefined || productId === null || productId === "" ||
+            warehouseId === undefined || warehouseId === null || warehouseId === "" ||
+            quantity === undefined || quantity === null || quantity === ""
+        ) {
             return Response.json(
                 {
                     success: false,
@@ -16,14 +21,35 @@ const createInventory = async (request, user) => {
             );
         }
 
+        const parsedProductId = Number(productId);
+        const parsedWarehouseId = Number(warehouseId);
+        const parsedQuantity = Number(quantity);
+        const parsedReorderLevel =
+            reorderLevel === undefined ? 10 : Number(reorderLevel);
+
+        if (
+            !Number.isInteger(parsedProductId) || parsedProductId <= 0 ||
+            !Number.isInteger(parsedWarehouseId) || parsedWarehouseId <= 0 ||
+            !Number.isInteger(parsedQuantity) || parsedQuantity < 0 ||
+            !Number.isInteger(parsedReorderLevel) || parsedReorderLevel < 0
+        ) {
+            return Response.json(
+                {
+                    success: false,
+                    message: "Invalid inventory values",
+                },
+                { status: 400 }
+            );
+        }
+
         const inventory = await inventoryService.createInventory(
             user.id,
             user.roleId,
             {
-                productId: Number(productId),
-                warehouseId: Number(warehouseId),
-                quantity: Number(quantity),
-                reorderLevel: reorderLevel === undefined ? 10 : Number(reorderLevel),
+                productId: parsedProductId,
+                warehouseId: parsedWarehouseId,
+                quantity: parsedQuantity,
+                reorderLevel: parsedReorderLevel,
             }
         );
 
@@ -35,7 +61,6 @@ const createInventory = async (request, user) => {
             },
             { status: 201 }
         );
-
     } catch (error) {
         console.error("Create Inventory Error:", error);
 
@@ -53,12 +78,28 @@ const createInventory = async (request, user) => {
     }
 };
 
+
 const getWarehouseInventory = async (user, warehouseId) => {
     try {
+        const parsedWarehouseId = Number(warehouseId);
+
+        if (
+            !Number.isInteger(parsedWarehouseId) ||
+            parsedWarehouseId <= 0
+        ) {
+            return Response.json(
+                {
+                    success: false,
+                    message: "Invalid Warehouse ID",
+                },
+                { status: 400 }
+            );
+        }
+
         const inventory = await inventoryService.getWarehouseInventory(
             user.id,
             user.roleId,
-            Number(warehouseId)
+            parsedWarehouseId
         );
 
         return Response.json(
@@ -69,18 +110,21 @@ const getWarehouseInventory = async (user, warehouseId) => {
             },
             { status: 200 }
         );
-
     } catch (error) {
         console.error("Get Warehouse Inventory Error:", error);
 
         const status =
             error.message.includes("Access Denied") ? 403 :
-                error.message.includes("Not Found") ? 404 : 400;
+            error.message.includes("Not Found") ? 404 :
+            error.message.includes("Invalid") ? 400 : 500;
 
         return Response.json(
             {
                 success: false,
-                message: error.message,
+                message:
+                    status === 500
+                        ? "Internal Server Error"
+                        : error.message,
             },
             { status }
         );
@@ -90,15 +134,66 @@ const getWarehouseInventory = async (user, warehouseId) => {
 
 const updateInventory = async (request, user, id) => {
     try {
+        const inventoryId = Number(id);
+
+        if (!Number.isInteger(inventoryId) || inventoryId <= 0) {
+            return Response.json(
+                {
+                    success: false,
+                    message: "Invalid Inventory ID",
+                },
+                { status: 400 }
+            );
+        }
+
         const body = await request.json();
+
+        if (
+            !body ||
+            typeof body !== "object" ||
+            Array.isArray(body)
+        ) {
+            return Response.json(
+                {
+                    success: false,
+                    message: "Invalid Request Body",
+                },
+                { status: 400 }
+            );
+        }
+
+        const allowedFields = ["quantity", "reorderLevel"];
+        const providedFields = Object.keys(body);
+
+        if (
+            providedFields.length === 0 ||
+            providedFields.some(
+                (field) => !allowedFields.includes(field)
+            )
+        ) {
+            return Response.json(
+                {
+                    success: false,
+                    message: "Invalid or Missing Update Fields",
+                },
+                { status: 400 }
+            );
+        }
 
         const inventory = await inventoryService.updateInventory(
             user.id,
             user.roleId,
-            Number(id),
+            inventoryId,
             {
-                quantity: body.quantity === undefined ? undefined : Number(body.quantity),
-                reorderLevel: body.reorderLevel === undefined ? undefined : Number(body.reorderLevel),
+                quantity:
+                    body.quantity === undefined
+                        ? undefined
+                        : Number(body.quantity),
+
+                reorderLevel:
+                    body.reorderLevel === undefined
+                        ? undefined
+                        : Number(body.reorderLevel),
             }
         );
 
@@ -110,18 +205,24 @@ const updateInventory = async (request, user, id) => {
             },
             { status: 200 }
         );
-
     } catch (error) {
         console.error("Update Inventory Error:", error);
 
         const status =
             error.message.includes("Access Denied") ? 403 :
-                error.message === "Inventory Not Found" ? 404 : 400;
+            error.message === "Inventory Not Found" ? 404 :
+            error.message.includes("Not Found") ? 404 :
+            error.message.includes("Required") ||
+            error.message.includes("Non-Negative") ||
+            error.message.includes("Invalid") ? 400 : 500;
 
         return Response.json(
             {
                 success: false,
-                message: error.message,
+                message:
+                    status === 500
+                        ? "Internal Server Error"
+                        : error.message,
             },
             { status }
         );
@@ -129,12 +230,26 @@ const updateInventory = async (request, user, id) => {
 };
 
 
+
+
 const deleteInventory = async (user, id) => {
     try {
+        const inventoryId = Number(id);
+
+        if (!Number.isInteger(inventoryId) || inventoryId <= 0) {
+            return Response.json(
+                {
+                    success: false,
+                    message: "Invalid Inventory ID",
+                },
+                { status: 400 }
+            );
+        }
+
         await inventoryService.deleteInventory(
             user.id,
             user.roleId,
-            Number(id)
+            inventoryId
         );
 
         return Response.json(
@@ -144,18 +259,21 @@ const deleteInventory = async (user, id) => {
             },
             { status: 200 }
         );
-
     } catch (error) {
         console.error("Delete Inventory Error:", error);
 
         const status =
             error.message.includes("Access Denied") ? 403 :
-                error.message === "Inventory Not Found" ? 404 : 400;
+            error.message === "Inventory Not Found" ? 404 :
+            error.message.includes("Not Found") ? 404 : 500;
 
         return Response.json(
             {
                 success: false,
-                message: error.message,
+                message:
+                    status === 500
+                        ? "Internal Server Error"
+                        : error.message,
             },
             { status }
         );
@@ -163,12 +281,29 @@ const deleteInventory = async (user, id) => {
 };
 
 
+
+
 const getLowStockInventory = async (user, warehouseId) => {
     try {
+        const parsedWarehouseId = Number(warehouseId);
+
+        if (
+            !Number.isInteger(parsedWarehouseId) ||
+            parsedWarehouseId <= 0
+        ) {
+            return Response.json(
+                {
+                    success: false,
+                    message: "Invalid Warehouse ID",
+                },
+                { status: 400 }
+            );
+        }
+
         const data = await inventoryService.getLowStockInventory(
             user.id,
             user.roleId,
-            Number(warehouseId)
+            parsedWarehouseId
         );
 
         return Response.json({
@@ -177,18 +312,26 @@ const getLowStockInventory = async (user, warehouseId) => {
             data,
         });
     } catch (error) {
-        const status = error.message.includes("Access Denied")
-            ? 403
-            : error.message.includes("Not Found")
-                ? 404
-                : 400;
+        console.error("Get Low Stock Inventory Error:", error);
+
+        const status =
+            error.message.includes("Access Denied") ? 403 :
+            error.message.includes("Not Found") ? 404 :
+            error.message.includes("Invalid") ? 400 : 500;
 
         return Response.json(
-            { success: false, message: error.message },
+            {
+                success: false,
+                message:
+                    status === 500
+                        ? "Internal Server Error"
+                        : error.message,
+            },
             { status }
         );
     }
 };
+
 
 
 

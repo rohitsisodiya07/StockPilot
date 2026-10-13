@@ -1,14 +1,82 @@
 import * as salesOrderService from "@/Service/salesOrderService";
 
+// -------------------- Common Helpers --------------------
+
+const parseOrderId = (id) => {
+    const orderId = Number(id);
+
+    if (!Number.isInteger(orderId) || orderId <= 0) {
+        throw new Error("Invalid Sales Order ID");
+    }
+
+    return orderId;
+};
+
+const handleError = (error, action) => {
+    console.error(`${action} Error:`, error);
+
+    const message = error?.message || "";
+
+    let status = 500;
+
+    if (
+        message === "Invalid Sales Order ID" ||
+        message.includes("Invalid") ||
+        message.includes("Required") ||
+        message.includes("Only") ||
+        message.includes("Without Items") ||
+        message.includes("Insufficient Stock") ||
+        message.includes("Cannot") ||
+        message.includes("Must")
+    ) {
+        status = 400;
+    } else if (message.includes("Access Denied")) {
+        status = 403;
+    } else if (message.includes("Not Found")) {
+        status = 404;
+    }
+
+    return Response.json(
+        {
+            success: false,
+            message:
+                status === 500
+                    ? "Internal Server Error"
+                    : message,
+        },
+        { status }
+    );
+};
+
+// -------------------- Create Sales Order --------------------
+
 const createSalesOrder = async (request, user) => {
     try {
         const body = await request.json();
+
+        if (!body || typeof body !== "object" || Array.isArray(body)) {
+            throw new Error("Invalid Request Body");
+        }
+
+        if (
+            body.warehouseId === undefined ||
+            body.warehouseId === null ||
+            body.warehouseId === ""
+        ) {
+            throw new Error("Warehouse ID Is Required");
+        }
+
+        const warehouseId = Number(body.warehouseId);
+
+        if (!Number.isInteger(warehouseId) || warehouseId <= 0) {
+            throw new Error("Invalid Warehouse ID");
+        }
 
         const data = await salesOrderService.createSalesOrder(
             user.id,
             user.roleId,
             {
-                warehouseId: Number(body.warehouseId),
+                warehouseId,
                 customerName: body.customerName,
                 customerEmail: body.customerEmail,
             }
@@ -23,47 +91,28 @@ const createSalesOrder = async (request, user) => {
             { status: 201 }
         );
     } catch (error) {
-        const status =
-            error.message.includes("Access Denied") ? 403 :
-                error.message.includes("Not Found") ? 404 :
-                    error.message.includes("Required") ? 400 : 500;
-
-        return Response.json(
-            {
-                success: false,
-                message: error.message,
-            },
-            { status }
-        );
+        return handleError(error, "Create Sales Order");
     }
 };
+
+// -------------------- Get All Sales Orders --------------------
 
 const getAllSalesOrders = async (request, user) => {
     try {
         const { searchParams } = new URL(request.url);
 
-        const status = searchParams.get("status");
-        const search = searchParams.get("search");
-        const page = searchParams.get("page") || 1;
-        const limit = searchParams.get("limit") || 10;
-        const startDate = searchParams.get("startDate");
-        const endDate = searchParams.get("endDate");
-        const sortOrder = searchParams.get("sortOrder") || "DESC";
-        const sortBy = searchParams.get("sortBy") || "createdAt";
-        const warehouseId = searchParams.get("warehouseId");
-
         const result = await salesOrderService.getAllSalesOrders(
             user.id,
             user.roleId,
-            status,
-            search,
-            page,
-            limit,
-            startDate,
-            endDate,
-            sortBy,
-            sortOrder,
-            warehouseId
+            searchParams.get("status"),
+            searchParams.get("search"),
+            searchParams.get("page") ?? 1,
+            searchParams.get("limit") ?? 10,
+            searchParams.get("startDate"),
+            searchParams.get("endDate"),
+            searchParams.get("sortBy") || "createdAt",
+            searchParams.get("sortOrder") || "DESC",
+            searchParams.get("warehouseId")
         );
 
         return Response.json({
@@ -72,39 +121,21 @@ const getAllSalesOrders = async (request, user) => {
             data: result.data,
             pagination: result.pagination,
         });
-
     } catch (error) {
-
-        const statusCode = [
-            "Invalid Sales Order Status",
-            "Invalid Start Date",
-            "Invalid End Date",
-            "Start Date Cannot Be After End Date",
-            "Invalid Sort Order",
-            "Invalid Sort Field",
-            "Invalid Warehouse ID",
-        ].includes(error.message)
-            ? 400
-            : error.message === "Warehouse Not Found"
-                ? 404
-                : error.message.includes("Access Denied")
-                    ? 403
-                    : 500;
-
-        return Response.json({
-            success: false,
-            message: error.message,
-        }, { status: statusCode });
+        return handleError(error, "Get Sales Orders");
     }
 };
 
+// -------------------- Get One Sales Order --------------------
 
 const getOneSalesOrder = async (user, id) => {
     try {
+        const orderId = parseOrderId(id);
+
         const data = await salesOrderService.getOneSalesOrder(
             user.id,
             user.roleId,
-            id
+            orderId
         );
 
         return Response.json({
@@ -113,30 +144,30 @@ const getOneSalesOrder = async (user, id) => {
             data,
         });
     } catch (error) {
-        const status =
-            error.message === "Sales Order Not Found" ? 404 :
-                error.message.includes("Access Denied") ? 403 : 500;
-
-        return Response.json(
-            {
-                success: false,
-                message: error.message,
-            },
-            { status }
-        );
+        return handleError(error, "Get Sales Order");
     }
 };
 
+// -------------------- Update Sales Order Status --------------------
 
 const updateSalesOrderStatus = async (request, user, id) => {
     try {
+        const orderId = parseOrderId(id);
         const body = await request.json();
+
+        if (
+            !body ||
+            typeof body.status !== "string" ||
+            !body.status.trim()
+        ) {
+            throw new Error("Sales Order Status Is Required");
+        }
 
         const data = await salesOrderService.updateSalesOrderStatus(
             user.id,
             user.roleId,
-            Number(id),
-            body.status
+            orderId,
+            body.status.trim().toUpperCase()
         );
 
         return Response.json({
@@ -145,27 +176,20 @@ const updateSalesOrderStatus = async (request, user, id) => {
             data,
         });
     } catch (error) {
-        const status =
-            error.message.includes("Access Denied") ? 403 :
-                error.message.includes("Not Found") ? 404 :
-                    error.message.includes("Invalid") ||
-                        error.message.includes("Only") ||
-                        error.message.includes("Without Items") ? 400 : 500;
-
-        return Response.json({
-            success: false,
-            message: error.message,
-        }, { status });
+        return handleError(error, "Update Sales Order Status");
     }
 };
 
+// -------------------- Dispatch Sales Order --------------------
 
 const dispatchSalesOrder = async (user, id) => {
     try {
+        const orderId = parseOrderId(id);
+
         const data = await salesOrderService.dispatchSalesOrder(
             user.id,
             user.roleId,
-            Number(id)
+            orderId
         );
 
         return Response.json({
@@ -174,25 +198,14 @@ const dispatchSalesOrder = async (user, id) => {
             data,
         });
     } catch (error) {
-        const status =
-            error.message.includes("Access Denied") ? 403 :
-                error.message.includes("Not Found") ? 404 :
-                    error.message.includes("Only") ||
-                        error.message.includes("Without Items") ||
-                        error.message.includes("Insufficient Stock") ? 400 : 500;
-
-        return Response.json({
-            success: false,
-            message: error.message,
-        }, { status });
+        return handleError(error, "Dispatch Sales Order");
     }
 };
-
 
 export {
     createSalesOrder,
     getAllSalesOrders,
     getOneSalesOrder,
     updateSalesOrderStatus,
-    dispatchSalesOrder
+    dispatchSalesOrder,
 };

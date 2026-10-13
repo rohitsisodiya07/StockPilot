@@ -47,17 +47,19 @@ const createPurchaseOrder = async (userId, roleId, data) => {
 
 
 const getAllPurchaseOrders = async (userId, roleId) => {
-    let warehouseIds = null;
+    if (roleId === 1) {
+        return await purchaseOrderRepository.getAllPurchaseOrders(null);
+    }
 
-    if (roleId !== 1) {
-        const warehouses = await userWarehouseService.getUserWarehouses(userId);
+    const warehouses = await userWarehouseService.getUserWarehouses(userId);
+    const warehouseIds = warehouses.map((item) => item.warehouseId);
 
-        warehouseIds = warehouses.map((item) => item.warehouseId);
+    if (warehouseIds.length === 0) {
+        return [];
     }
 
     return await purchaseOrderRepository.getAllPurchaseOrders(warehouseIds);
 };
-
 
 
 const getOnePurchaseOrder = async (userId, roleId, id) => {
@@ -177,6 +179,7 @@ const receivePurchaseOrder = async (userId, roleId, id) => {
                         productId: item.productId,
                         warehouseId: order.warehouseId,
                         quantity: item.quantity,
+                        reorderLevel: 10,
                     },
                     { transaction }
                 );

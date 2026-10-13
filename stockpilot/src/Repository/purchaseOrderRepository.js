@@ -1,3 +1,4 @@
+
 import { Op } from "sequelize";
 import * as model from "@/Model/index";
 
@@ -6,6 +7,12 @@ const createPurchaseOrder = async (data) => {
 };
 
 const getAllPurchaseOrders = async (warehouseIds = null) => {
+    // null means Admin can access all warehouses.
+    // An empty array means the user has no assigned warehouses.
+    if (Array.isArray(warehouseIds) && warehouseIds.length === 0) {
+        return [];
+    }
+
     const where = {};
 
     if (warehouseIds !== null) {
@@ -68,7 +75,9 @@ const getOnePurchaseOrder = async (id) => {
 const updatePurchaseOrder = async (id, data) => {
     const purchaseOrder = await model.PurchaseOrder.findByPk(id);
 
-    if (!purchaseOrder) return null;
+    if (!purchaseOrder) {
+        return null;
+    }
 
     return await purchaseOrder.update(data);
 };
@@ -76,7 +85,9 @@ const updatePurchaseOrder = async (id, data) => {
 const deletePurchaseOrder = async (id) => {
     const purchaseOrder = await model.PurchaseOrder.findByPk(id);
 
-    if (!purchaseOrder) return null;
+    if (!purchaseOrder) {
+        return null;
+    }
 
     return await purchaseOrder.destroy();
 };

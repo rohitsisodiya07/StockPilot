@@ -9,63 +9,94 @@ import {
     updatePurchaseOrderStatus,
 } from "@/Controller/purchaseOrderController";
 
+const handleError = (error, action) => {
+    console.error(`${action} Route Error:`, error);
+
+    const isAuthError =
+        error.message === "Invalid or Expired Token";
+
+    return Response.json(
+        {
+            success: false,
+            message: isAuthError
+                ? "Invalid or Expired Token"
+                : "Internal Server Error",
+        },
+        { status: isAuthError ? 401 : 500 }
+    );
+};
+
+const parseOrderId = (id) => {
+    const orderId = Number(id);
+
+    return Number.isInteger(orderId) && orderId > 0
+        ? orderId
+        : null;
+};
+
 export async function GET(request, { params }) {
     try {
         await connectDB();
-
         const user = await authMiddleware(request);
-        const { id } = await params;
 
-        return await getOnePurchaseOrder(user, Number(id));
+        const { id } = await params;
+        const orderId = parseOrderId(id);
+
+        if (orderId === null) {
+            return Response.json(
+                { success: false, message: "Invalid Purchase Order ID" },
+                { status: 400 }
+            );
+        }
+
+        return await getOnePurchaseOrder(user, orderId);
     } catch (error) {
-        return Response.json(
-            {
-                success: false,
-                message: error.message,
-            },
-            { status: 401 }
-        );
+        return handleError(error, "Get Purchase Order");
     }
 }
 
 export async function PATCH(request, { params }) {
     try {
         await connectDB();
-
         const user = await authMiddleware(request);
+
         const { id } = await params;
+        const orderId = parseOrderId(id);
+
+        if (orderId === null) {
+            return Response.json(
+                { success: false, message: "Invalid Purchase Order ID" },
+                { status: 400 }
+            );
+        }
 
         return await updatePurchaseOrderStatus(
             request,
             user,
-            Number(id)
+            orderId
         );
     } catch (error) {
-        return Response.json(
-            {
-                success: false,
-                message: error.message,
-            },
-            { status: 401 }
-        );
+        return handleError(error, "Update Purchase Order");
     }
 }
 
 export async function POST(request, { params }) {
     try {
         await connectDB();
-
         const user = await authMiddleware(request);
-        const { id } = await params;
 
-        return await receivePurchaseOrder(user, Number(id));
+        const { id } = await params;
+        const orderId = parseOrderId(id);
+
+        if (orderId === null) {
+            return Response.json(
+                { success: false, message: "Invalid Purchase Order ID" },
+                { status: 400 }
+            );
+        }
+
+        return await receivePurchaseOrder(user, orderId);
     } catch (error) {
-        return Response.json(
-            {
-                success: false,
-                message: error.message,
-            },
-            { status: 401 }
-        );
+        return handleError(error, "Receive Purchase Order");
     }
 }

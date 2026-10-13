@@ -1,26 +1,49 @@
 import * as roleRepository from "@/Repository/roleRepository";
 
+// -------------------- Create Role --------------------
+
 const createRole = async (data) => {
-    const existingRole = await roleRepository.findByName(data.name);
+    if (
+        !data ||
+        typeof data.name !== "string" ||
+        !data.name.trim()
+    ) {
+        throw new Error("Role Name is Required");
+    }
+
+    const name = data.name.trim().toUpperCase();
+
+    const existingRole = await roleRepository.findByName(name);
 
     if (existingRole) {
         throw new Error("Role Already Exists");
     }
 
-    return await roleRepository.createRole(data);
+    return await roleRepository.createRole({ name });
 };
 
-const getAllRoles = async () => {
-    const getData = await roleRepository.getAllRoles();
+// -------------------- Get All Roles --------------------
 
-    if (!getData) {
-        throw new Error('Error Occur in Get All');
+const getAllRoles = async () => {
+    const roles = await roleRepository.getAllRoles();
+
+    if (!Array.isArray(roles)) {
+        throw new Error("Failed to Fetch Roles");
     }
-    return getData;
-}
+
+    return roles;
+};
+
+// -------------------- Get One Role --------------------
 
 const getOneRole = async (id) => {
-    const role = await roleRepository.getOneRole(id);
+    const roleId = Number(id);
+
+    if (!Number.isInteger(roleId) || roleId <= 0) {
+        throw new Error("Invalid Role ID");
+    }
+
+    const role = await roleRepository.getOneRole(roleId);
 
     if (!role) {
         throw new Error("Role Not Found");
@@ -29,30 +52,59 @@ const getOneRole = async (id) => {
     return role;
 };
 
+// -------------------- Update Role --------------------
+
 const updateRole = async (id, data) => {
-    const role = await roleRepository.getOneRole(id);
+    const roleId = Number(id);
+
+    if (!Number.isInteger(roleId) || roleId <= 0) {
+        throw new Error("Invalid Role ID");
+    }
+
+    if (
+        !data ||
+        typeof data.name !== "string" ||
+        !data.name.trim()
+    ) {
+        throw new Error("Role Name is Required");
+    }
+
+    const role = await roleRepository.getOneRole(roleId);
 
     if (!role) {
         throw new Error("Role Not Found");
     }
 
-    const existingRole = await roleRepository.findByName(data.name);
+    const name = data.name.trim().toUpperCase();
 
-    if (existingRole && existingRole.id !== Number(id)) {
+    const existingRole = await roleRepository.findByName(name);
+
+    if (
+        existingRole &&
+        Number(existingRole.id) !== roleId
+    ) {
         throw new Error("Role Already Exists");
     }
 
-    return await roleRepository.updateRole(id, data);
+    return await roleRepository.updateRole(roleId, { name });
 };
 
+// -------------------- Delete Role --------------------
+
 const deleteRole = async (id) => {
-    const role = await roleRepository.getOneRole(id);
+    const roleId = Number(id);
+
+    if (!Number.isInteger(roleId) || roleId <= 0) {
+        throw new Error("Invalid Role ID");
+    }
+
+    const role = await roleRepository.getOneRole(roleId);
 
     if (!role) {
         throw new Error("Role Not Found");
     }
 
-    return await roleRepository.deleteRole(id);
+    return await roleRepository.deleteRole(roleId);
 };
 
 export {
@@ -60,5 +112,5 @@ export {
     getAllRoles,
     getOneRole,
     updateRole,
-    deleteRole
+    deleteRole,
 };

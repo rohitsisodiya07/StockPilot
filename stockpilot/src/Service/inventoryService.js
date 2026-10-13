@@ -5,8 +5,25 @@ import * as userWarehouseService from "@/Service/userWarehouseService";
 
 
 // Validates product, warehouse, access permission, quantity and duplicate inventory before creating a record.
+
 const createInventory = async (userId, roleId, data) => {
     const { productId, warehouseId, quantity, reorderLevel } = data;
+
+    if (!Number.isInteger(productId) || productId <= 0) {
+        throw new Error("Invalid Product ID");
+    }
+
+    if (!Number.isInteger(warehouseId) || warehouseId <= 0) {
+        throw new Error("Invalid Warehouse ID");
+    }
+
+    if (!Number.isInteger(quantity) || quantity < 0) {
+        throw new Error("Quantity Must Be A Non-Negative Integer");
+    }
+
+    if (!Number.isInteger(reorderLevel) || reorderLevel < 0) {
+        throw new Error("Reorder Level Must Be A Non-Negative Integer");
+    }
 
     const product = await productRepository.getOneProduct(productId);
 
@@ -26,10 +43,6 @@ const createInventory = async (userId, roleId, data) => {
         warehouseId
     );
 
-    if (quantity < 0 || !Number.isInteger(quantity)) {
-        throw new Error("Quantity Must Be A Non-Negative Integer");
-    }
-
     const existingInventory = await inventoryRepository.findInventory(
         productId,
         warehouseId
@@ -47,7 +60,13 @@ const createInventory = async (userId, roleId, data) => {
     });
 };
 
+
+
 const getWarehouseInventory = async (userId, roleId, warehouseId) => {
+    if (!Number.isInteger(warehouseId) || warehouseId <= 0) {
+        throw new Error("Invalid Warehouse ID");
+    }
+
     const warehouse = await warehouseRepository.getOneWarehouse(warehouseId);
 
     if (!warehouse) {
@@ -62,6 +81,7 @@ const getWarehouseInventory = async (userId, roleId, warehouseId) => {
 
     return await inventoryRepository.getWarehouseInventory(warehouseId);
 };
+
 
 
 const updateInventory = async (userId, roleId, id, data) => {
@@ -88,8 +108,13 @@ const updateInventory = async (userId, roleId, id, data) => {
     }
 
     if (data.reorderLevel !== undefined) {
-        if (!Number.isInteger(data.reorderLevel) || data.reorderLevel < 0) {
-            throw new Error("Reorder Level Must Be A Non-Negative Integer");
+        if (
+            !Number.isInteger(data.reorderLevel) ||
+            data.reorderLevel < 0
+        ) {
+            throw new Error(
+                "Reorder Level Must Be A Non-Negative Integer"
+            );
         }
 
         updateData.reorderLevel = data.reorderLevel;
@@ -120,7 +145,12 @@ const deleteInventory = async (userId, roleId, id) => {
 };
 
 
+
 const getLowStockInventory = async (userId, roleId, warehouseId) => {
+    if (!Number.isInteger(warehouseId) || warehouseId <= 0) {
+        throw new Error("Invalid Warehouse ID");
+    }
+
     const warehouse = await warehouseRepository.getOneWarehouse(warehouseId);
 
     if (!warehouse) {
@@ -135,7 +165,6 @@ const getLowStockInventory = async (userId, roleId, warehouseId) => {
 
     return await inventoryRepository.getLowStockInventory(warehouseId);
 };
-
 
 
 export {

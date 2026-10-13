@@ -13,8 +13,13 @@ const getDashboardAnalytics = async (user) => {
             data,
         });
     } catch (error) {
+        console.error("Dashboard Controller Error:", error);
+
         return Response.json(
-            { success: false, message: error.message },
+            {
+                success: false,
+                message: "Failed to Fetch Dashboard Analytics",
+            },
             { status: 500 }
         );
     }

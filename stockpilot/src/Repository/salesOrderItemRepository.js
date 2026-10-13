@@ -1,10 +1,22 @@
 import * as model from "@/Model/index";
 
-const createSalesOrderItem = async (data, transaction) => {
-    return await model.SalesOrderItem.create(data, { transaction });
+// -------------------- Create Sales Order Item --------------------
+
+const createSalesOrderItem = async (
+    data,
+    transaction = undefined
+) => {
+    return await model.SalesOrderItem.create(data, {
+        ...(transaction ? { transaction } : {}),
+    });
 };
 
-const getSalesOrderItems = async (salesOrderId) => {
+// -------------------- Get All Items for an Order --------------------
+
+const getSalesOrderItems = async (
+    salesOrderId,
+    transaction = undefined
+) => {
     return await model.SalesOrderItem.findAll({
         where: { salesOrderId },
         include: [
@@ -15,10 +27,16 @@ const getSalesOrderItems = async (salesOrderId) => {
             },
         ],
         order: [["createdAt", "ASC"]],
+        ...(transaction ? { transaction } : {}),
     });
 };
 
-const getOneSalesOrderItem = async (id) => {
+// -------------------- Get One Sales Order Item --------------------
+
+const getOneSalesOrderItem = async (
+    id,
+    transaction = undefined
+) => {
     return await model.SalesOrderItem.findByPk(id, {
         include: [
             {
@@ -27,15 +45,29 @@ const getOneSalesOrderItem = async (id) => {
                 attributes: ["id", "name", "sku", "price"],
             },
         ],
+        ...(transaction ? { transaction } : {}),
     });
 };
 
-const deleteSalesOrderItem = async (id) => {
-    const item = await model.SalesOrderItem.findByPk(id);
+// -------------------- Delete Sales Order Item --------------------
 
-    if (!item) return null;
+const deleteSalesOrderItem = async (
+    id,
+    transaction = undefined
+) => {
+    const item = await model.SalesOrderItem.findByPk(id, {
+        ...(transaction ? { transaction } : {}),
+    });
 
-    return await item.destroy();
+    if (!item) {
+        return null;
+    }
+
+    await item.destroy({
+        ...(transaction ? { transaction } : {}),
+    });
+
+    return item;
 };
 
 export {

@@ -1,32 +1,55 @@
 import * as model from "@/Model/index";
 import { Op } from "sequelize";
 
+// -------------------- Common Helpers --------------------
+
+const buildDateFilter = (startDate, endDate) => {
+    if (!startDate && !endDate) {
+        return {};
+    }
+
+    const createdAt = {};
+
+    if (startDate) {
+        createdAt[Op.gte] = new Date(
+            `${startDate}T00:00:00.000Z`
+        );
+    }
+
+    if (endDate) {
+        const nextDay = new Date(
+            `${endDate}T00:00:00.000Z`
+        );
+
+        nextDay.setUTCDate(nextDay.getUTCDate() + 1);
+        createdAt[Op.lt] = nextDay;
+    }
+
+    return { createdAt };
+};
+
+const emptyWarehouseList = (warehouseIds) =>
+    Array.isArray(warehouseIds) && warehouseIds.length === 0;
+
+// -------------------- Sales Orders Report --------------------
+
 const getSalesOrdersForReport = async (
     warehouseIds = null,
     startDate = null,
     endDate = null
 ) => {
-    const where = {};
+    if (emptyWarehouseList(warehouseIds)) {
+        return [];
+    }
+
+    const where = {
+        ...buildDateFilter(startDate, endDate),
+    };
 
     if (warehouseIds !== null) {
         where.warehouseId = {
             [Op.in]: warehouseIds,
         };
-    }
-
-    if (startDate || endDate) {
-        where.createdAt = {};
-
-        if (startDate) {
-            where.createdAt[Op.gte] = new Date(startDate);
-        }
-
-        if (endDate) {
-            const nextDay = new Date(endDate);
-            nextDay.setDate(nextDay.getDate() + 1);
-
-            where.createdAt[Op.lt] = nextDay;
-        }
     }
 
     return await model.SalesOrder.findAll({
@@ -42,55 +65,58 @@ const getSalesOrdersForReport = async (
     });
 };
 
+// -------------------- Warehouse Sales Report --------------------
 
 const getWarehouseSalesReport = async (
     warehouseIds = null,
     startDate = null,
     endDate = null
 ) => {
-    const where = {};
+    if (emptyWarehouseList(warehouseIds)) {
+        return [];
+    }
+
+    const warehouseWhere = {};
 
     if (warehouseIds !== null) {
-        where.warehouseId = {
+        warehouseWhere.id = {
             [Op.in]: warehouseIds,
         };
     }
 
-    if (startDate || endDate) {
-        where.createdAt = {};
+    const orderWhere = {
+        ...buildDateFilter(startDate, endDate),
+    };
 
-        if (startDate) {
-            where.createdAt[Op.gte] = new Date(startDate);
-        }
-
-        if (endDate) {
-            const nextDay = new Date(endDate);
-            nextDay.setDate(nextDay.getDate() + 1);
-
-            where.createdAt[Op.lt] = nextDay;
-        }
-    }
-
-    return await model.SalesOrder.findAll({
-        where,
+    return await model.Warehouse.findAll({
+        where: warehouseWhere,
         include: [
             {
-                model: model.Warehouse,
-                as: "warehouse",
-                attributes: ["id", "name", "location"],
-            },
-            {
-                model: model.SalesOrderItem,
-                as: "items",
-                attributes: ["quantity", "unitPrice"],
+                model: model.SalesOrder,
+                as: "salesOrders",
+                where: orderWhere,
+                required: false,
+                attributes: ["id", "status", "createdAt"],
+                include: [
+                    {
+                        model: model.SalesOrderItem,
+                        as: "items",
+                        attributes: ["quantity", "unitPrice"],
+                    },
+                ],
             },
         ],
-        order: [["createdAt", "DESC"]],
+        order: [["id", "ASC"]],
     });
 };
 
+// -------------------- Inventory Report --------------------
 
 const getInventoryReport = async (warehouseIds = null) => {
+    if (emptyWarehouseList(warehouseIds)) {
+        return [];
+    }
+
     const where = {};
 
     if (warehouseIds !== null) {
@@ -116,7 +142,7 @@ const getInventoryReport = async (warehouseIds = null) => {
     });
 };
 
-
+// -------------------- Stock Movement Report --------------------
 
 const getStockMovementReport = async (
     warehouseIds = null,
@@ -125,25 +151,16 @@ const getStockMovementReport = async (
     startDate = null,
     endDate = null
 ) => {
-    const where = {};
+    if (emptyWarehouseList(warehouseIds)) {
+        return [];
+    }
+
+    const where = {
+        ...buildDateFilter(startDate, endDate),
+    };
 
     if (movementType !== null) {
         where.type = movementType;
-    }
-
-    if (startDate || endDate) {
-        where.createdAt = {};
-
-        if (startDate) {
-            where.createdAt[Op.gte] = new Date(startDate);
-        }
-
-        if (endDate) {
-            const nextDay = new Date(endDate);
-            nextDay.setDate(nextDay.getDate() + 1);
-
-            where.createdAt[Op.lt] = nextDay;
-        }
     }
 
     const inventoryWhere = {};
@@ -155,7 +172,15 @@ const getStockMovementReport = async (
     }
 
     if (warehouseId !== null) {
-        inventoryWhere.warehouseId = warehouseId;
+        // Intersect the requested warehouse with assigned warehouses.
+        if (
+            warehouseIds !== null &&
+            !warehouseIds.includes(Number(warehouseId))
+        ) {
+            return [];
+        }
+
+        inventoryWhere.warehouseId = Number(warehouseId);
     }
 
     return await model.StockMovement.findAll({
@@ -189,6 +214,7 @@ const getStockMovementReport = async (
     });
 };
 
+// -------------------- Purchase Report --------------------
 
 const getPurchaseReport = async (
     warehouseIds = null,
@@ -197,39 +223,35 @@ const getPurchaseReport = async (
     startDate = null,
     endDate = null
 ) => {
-    const where = {};
+    if (emptyWarehouseList(warehouseIds)) {
+        return [];
+    }
 
-    // Filter by assigned warehouses
+    const where = {
+        ...buildDateFilter(startDate, endDate),
+    };
+
     if (warehouseIds !== null) {
         where.warehouseId = {
             [Op.in]: warehouseIds,
         };
     }
 
-    // Filter by a specific warehouse
     if (warehouseId !== null) {
-        where.warehouseId = warehouseId;
+        const requestedWarehouseId = Number(warehouseId);
+
+        if (
+            warehouseIds !== null &&
+            !warehouseIds.includes(requestedWarehouseId)
+        ) {
+            return [];
+        }
+
+        where.warehouseId = requestedWarehouseId;
     }
 
-    // Filter by purchase order status
     if (status !== null) {
         where.status = status;
-    }
-
-    // Filter by date range
-    if (startDate || endDate) {
-        where.createdAt = {};
-
-        if (startDate) {
-            where.createdAt[Op.gte] = new Date(startDate);
-        }
-
-        if (endDate) {
-            const nextDay = new Date(endDate);
-            nextDay.setDate(nextDay.getDate() + 1);
-
-            where.createdAt[Op.lt] = nextDay;
-        }
     }
 
     return await model.PurchaseOrder.findAll({
@@ -260,8 +282,10 @@ const getPurchaseReport = async (
     });
 };
 
-
-
-
-
-export { getSalesOrdersForReport, getWarehouseSalesReport, getInventoryReport, getStockMovementReport, getPurchaseReport };
+export {
+    getSalesOrdersForReport,
+    getWarehouseSalesReport,
+    getInventoryReport,
+    getStockMovementReport,
+    getPurchaseReport,
+};

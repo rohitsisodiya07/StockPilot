@@ -38,6 +38,7 @@ const createUser = async (data) => {
 };
 
 //login User
+
 const loginUser = async (email, password) => {
     const user = await userRepository.findByEmail(email);
 
@@ -54,12 +55,18 @@ const loginUser = async (email, password) => {
         throw new Error("Invalid Email or Password");
     }
 
+    const secret = process.env.JWT_SECRET;
+
+    if (!secret) {
+        throw new Error("JWT configuration missing");
+    }
+
     const token = jwt.sign(
         {
             id: user.id,
             roleId: user.roleId,
         },
-        process.env.JWT_SECRET,
+        secret,
         {
             expiresIn: process.env.JWT_EXPIRES_IN || "5d",
         }
@@ -74,6 +81,7 @@ const loginUser = async (email, password) => {
         token,
     };
 };
+
 
 // Get All Users
 const getAllUsers = async () => {
