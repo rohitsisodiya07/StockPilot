@@ -10,6 +10,7 @@ import PurchaseOrder from "./purchaseOrderModel";
 import PurchaseOrderItem from "./purchaseOrderItemModel";
 import SalesOrder from "./salesOrderModel";
 import SalesOrderItem from "./salesOrderItemModel";
+import Category from "./categoryModel";
 
 //Role->User
 Role.hasMany(User, { foreignKey: "roleId", as: "users", });
@@ -78,6 +79,8 @@ PurchaseOrder.belongsTo(Warehouse, { foreignKey: "warehouseId", as: "warehouse",
 //Models relate through a junction table
 PurchaseOrder.belongsTo(User, { foreignKey: "createdBy", as: "creator", });
 
+User.hasMany(PurchaseOrder, { foreignKey: "createdBy", as: "purchaseOrders", });
+
 //Har Sales Order ek particular warehouse se belong karta hai
 SalesOrder.belongsTo(Warehouse, { foreignKey: "warehouseId", as: "warehouse", });
 
@@ -102,6 +105,12 @@ Product.hasMany(SalesOrderItem, { foreignKey: "productId", as: "salesOrderItems"
 //Each order item refers to one product
 SalesOrderItem.belongsTo(Product, { foreignKey: "productId", as: "product", });
 
+// One category can contain multiple products.
+Category.hasMany(Product, { foreignKey: "categoryId", as: "products", });
+
+// Each product belongs to one category.
+Product.belongsTo(Category, { foreignKey: "categoryId", as: "category", });
+
 
 
 export {
@@ -116,5 +125,6 @@ export {
     PurchaseOrder,
     PurchaseOrderItem,
     SalesOrder,
-    SalesOrderItem
+    SalesOrderItem,
+    Category
 };

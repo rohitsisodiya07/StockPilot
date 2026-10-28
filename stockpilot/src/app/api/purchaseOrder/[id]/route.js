@@ -3,48 +3,65 @@ export const runtime = "nodejs";
 
 import connectDB from "@/lib/db/connectDB";
 import authMiddleware from "@/Middleware/authMiddleware";
+
 import {
     getOnePurchaseOrder,
-    receivePurchaseOrder,
+    updatePurchaseOrder,
     updatePurchaseOrderStatus,
 } from "@/Controller/purchaseOrderController";
 
 const handleError = (error, action) => {
     console.error(`${action} Route Error:`, error);
 
+    const message = error?.message || "";
+
     const isAuthError =
-        error.message === "Invalid or Expired Token";
+        message === "Invalid or Expired Token" ||
+        message === "Unauthorized";
 
     return Response.json(
         {
             success: false,
             message: isAuthError
-                ? "Invalid or Expired Token"
+                ? message
                 : "Internal Server Error",
         },
-        { status: isAuthError ? 401 : 500 }
+        {
+            status: isAuthError ? 401 : 500,
+        }
     );
 };
 
 const parseOrderId = (id) => {
+    if (
+        typeof id !== "string" ||
+        !/^[1-9]\d*$/.test(id)
+    ) {
+        return null;
+    }
+
     const orderId = Number(id);
 
-    return Number.isInteger(orderId) && orderId > 0
+    return Number.isSafeInteger(orderId)
         ? orderId
         : null;
 };
 
+// GET /api/purchase-order/:id
 export async function GET(request, { params }) {
     try {
         await connectDB();
-        const user = await authMiddleware(request);
 
+        const user = await authMiddleware(request);
         const { id } = await params;
         const orderId = parseOrderId(id);
 
         if (orderId === null) {
             return Response.json(
-                { success: false, message: "Invalid Purchase Order ID" },
+                {
+                    success: false,
+                    message: "Invalid Purchase Order ID",
+                },
                 { status: 400 }
             );
         }
@@ -55,17 +72,52 @@ export async function GET(request, { params }) {
     }
 }
 
-export async function PATCH(request, { params }) {
+// PUT /api/purchase-order/:id
+// Update expected delivery date for a draft order
+export async function PUT(request, { params }) {
     try {
         await connectDB();
-        const user = await authMiddleware(request);
 
+        const user = await authMiddleware(request);
         const { id } = await params;
         const orderId = parseOrderId(id);
 
         if (orderId === null) {
             return Response.json(
-                { success: false, message: "Invalid Purchase Order ID" },
+                {
+                    success: false,
+                    message: "Invalid Purchase Order ID",
+                },
+                { status: 400 }
+            );
+        }
+
+        return await updatePurchaseOrder(
+            request,
+            user,
+            orderId
+        );
+    } catch (error) {
+        return handleError(error, "Update Purchase Order");
+    }
+}
+
+// PATCH /api/purchase-order/:id
+// Update purchase order status
+export async function PATCH(request, { params }) {
+    try {
+        await connectDB();
+
+        const user = await authMiddleware(request);
+        const { id } = await params;
+        const orderId = parseOrderId(id);
+
+        if (orderId === null) {
+            return Response.json(
+                {
+                    success: false,
+                    message: "Invalid Purchase Order ID",
+                },
                 { status: 400 }
             );
         }
@@ -76,27 +128,6 @@ export async function PATCH(request, { params }) {
             orderId
         );
     } catch (error) {
-        return handleError(error, "Update Purchase Order");
-    }
-}
-
-export async function POST(request, { params }) {
-    try {
-        await connectDB();
-        const user = await authMiddleware(request);
-
-        const { id } = await params;
-        const orderId = parseOrderId(id);
-
-        if (orderId === null) {
-            return Response.json(
-                { success: false, message: "Invalid Purchase Order ID" },
-                { status: 400 }
-            );
-        }
-
-        return await receivePurchaseOrder(user, orderId);
-    } catch (error) {
-        return handleError(error, "Receive Purchase Order");
+        return handleError(error, "Update Purchase Order Status");
     }
 }

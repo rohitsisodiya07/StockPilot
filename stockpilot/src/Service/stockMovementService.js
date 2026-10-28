@@ -4,6 +4,26 @@ import * as stockMovementRepository from "@/Repository/stockMovementRepository";
 import * as inventoryRepository from "@/Repository/inventoryRepository";
 import * as userWarehouseService from "@/Service/userWarehouseService";
 
+// -------------------- Helpers --------------------
+
+const validatePositiveInteger = (value, fieldName) => {
+    const number = Number(value);
+
+    if (
+        value === undefined ||
+        value === null ||
+        value === "" ||
+        !Number.isInteger(number) ||
+        number <= 0
+    ) {
+        throw new Error(`Invalid ${fieldName}`);
+    }
+
+    return number;
+};
+
+// -------------------- Create Stock Movement --------------------
+
 const createStockMovement = async (
     userId,
     roleId,
@@ -12,16 +32,43 @@ const createStockMovement = async (
     quantity,
     note
 ) => {
-    if (!["IN", "OUT"].includes(type)) {
+    const parsedInventoryId = validatePositiveInteger(
+        inventoryId,
+        "Inventory ID"
+    );
+
+    const parsedQuantity = validatePositiveInteger(
+        quantity,
+        "Quantity"
+    );
+
+    if (
+        typeof type !== "string" ||
+        !["IN", "OUT"].includes(type.toUpperCase())
+    ) {
         throw new Error("Invalid Stock Movement Type");
     }
 
-    if (!Number.isInteger(quantity) || quantity <= 0) {
-        throw new Error("Quantity Must Be A Positive Integer");
+    const movementType = type.toUpperCase();
+
+    if (
+        note !== undefined &&
+        note !== null &&
+        (
+            typeof note !== "string" ||
+            note.length > 255
+        )
+    ) {
+        throw new Error("Invalid Stock Movement Note");
     }
 
+    const movementNote = note?.trim() || null;
+
+    // Verify inventory exists before checking warehouse access.
     const existingInventory =
-        await inventoryRepository.getOneInventory(inventoryId);
+        await inventoryRepository.getOneInventory(
+            parsedInventoryId
+        );
 
     if (!existingInventory) {
         throw new Error("Inventory Not Found");
@@ -33,27 +80,43 @@ const createStockMovement = async (
         existingInventory.warehouseId
     );
 
-    // Ensures stock updates and movement records succeed together.
+    // Update inventory and create movement atomically.
     return await sequelize.transaction(async (transaction) => {
-        const inventory = await model.Inventory.findByPk(inventoryId, {
-            transaction,
-            lock: transaction.LOCK.UPDATE,
-        });
+        const inventory = await model.Inventory.findByPk(
+            parsedInventoryId,
+            {
+                transaction,
+                lock: transaction.LOCK.UPDATE,
+            }
+        );
 
         if (!inventory) {
             throw new Error("Inventory Not Found");
         }
 
-        let newQuantity = inventory.quantity;
+        const currentQuantity = Number(inventory.quantity);
 
-        if (type === "IN") {
-            newQuantity += quantity;
+        if (
+            !Number.isSafeInteger(currentQuantity) ||
+            currentQuantity < 0
+        ) {
+            throw new Error("Invalid Inventory Quantity");
+        }
+
+        let newQuantity;
+
+        if (movementType === "IN") {
+            newQuantity = currentQuantity + parsedQuantity;
+
+            if (!Number.isSafeInteger(newQuantity)) {
+                throw new Error("Invalid Inventory Quantity");
+            }
         } else {
-            if (quantity > newQuantity) {
+            if (parsedQuantity > currentQuantity) {
                 throw new Error("Insufficient Stock");
             }
 
-            newQuantity -= quantity;
+            newQuantity = currentQuantity - parsedQuantity;
         }
 
         await inventory.update(
@@ -63,10 +126,10 @@ const createStockMovement = async (
 
         return await stockMovementRepository.createStockMovement(
             {
-                inventoryId,
-                type,
-                quantity,
-                note,
+                inventoryId: parsedInventoryId,
+                type: movementType,
+                quantity: parsedQuantity,
+                note: movementNote,
                 userId,
             },
             transaction
@@ -74,9 +137,22 @@ const createStockMovement = async (
     });
 };
 
-const getInventoryMovements = async (userId, roleId, inventoryId) => {
+// -------------------- Get Inventory Movements --------------------
+
+const getInventoryMovements = async (
+    userId,
+    roleId,
+    inventoryId
+) => {
+    const parsedInventoryId = validatePositiveInteger(
+        inventoryId,
+        "Inventory ID"
+    );
+
     const inventory =
-        await inventoryRepository.getOneInventory(inventoryId);
+        await inventoryRepository.getOneInventory(
+            parsedInventoryId
+        );
 
     if (!inventory) {
         throw new Error("Inventory Not Found");
@@ -88,7 +164,9 @@ const getInventoryMovements = async (userId, roleId, inventoryId) => {
         inventory.warehouseId
     );
 
-    return await stockMovementRepository.getInventoryMovements(inventoryId);
+    return await stockMovementRepository.getInventoryMovements(
+        parsedInventoryId
+    );
 };
 
 export {

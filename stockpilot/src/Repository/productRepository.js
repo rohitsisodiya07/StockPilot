@@ -1,51 +1,133 @@
+import { Op } from "sequelize";
 import * as model from "@/Model/index";
+// -------------------- Find Product By SKU --------------------
 
-// duplicate SKU check karne ke liye.
-const findBySKU = async (sku) => {
+const findBySKU = async (sku, transaction = undefined) => {
     return await model.Product.findOne({
-        where: {
-            sku,
-        },
+        where: { sku },
+        transaction,
     });
 };
 
-//Create Product
-const createProduct = async (data) => {
-    return await model.Product.create(data);
+// -------------------- Create Product --------------------
+
+const createProduct = async (data, transaction = undefined) => {
+    return await model.Product.create(data, {
+        transaction,
+    });
 };
 
-//Fetching All Product
-const getAllProducts = async () => {
-    return await model.Product.findAll();
+const getAllProducts = async (options = {}) => {
+    const {
+        transaction,
+        limit,
+        offset,
+        activeOnly = false,
+        search,
+        categoryId,
+    } = options;
+
+    const where = {};
+
+    // Filter active products
+    if (activeOnly) {
+        where.status = "ACTIVE";
+    }
+
+    // Search by product name or SKU
+    if (search) {
+        where[Op.or] = [
+            { name: { [Op.like]: `%${search}%` } },
+            { sku: { [Op.like]: `%${search}%` } },
+        ];
+    }
+
+    // Filter by category
+    if (categoryId !== undefined) {
+        where.categoryId = categoryId;
+    }
+
+    return await model.Product.findAll({
+        where,
+        include: [
+            {
+                model: model.Category,
+                as: "category",
+                attributes: ["id", "name", "status"],
+                required: false,
+            },
+        ],
+        ...(limit !== undefined && { limit }),
+        ...(offset !== undefined && { offset }),
+        ...(transaction && { transaction }),
+        order: [["createdAt", "DESC"]],
+    });
 };
 
-//Fetch One Product Based on ID
-const getOneProduct = async (id) => {
-    return await model.Product.findByPk(id);
+// -------------------- Fetch One Product By ID --------------------
+
+const getOneProduct = async (id, transaction = undefined) => {
+    return await model.Product.findByPk(id, {
+        include: [
+            {
+                model: model.Category,
+                as: "category",
+                attributes: ["id", "name", "status"],
+                required: false,
+            },
+        ],
+        transaction,
+    });
 };
 
-//Update Existing Product
-const updateProduct = async (id, data) => {
-    const product = await model.Product.findByPk(id);
+// -------------------- Update Product --------------------
+
+const updateProduct = async (
+    id,
+    data,
+    transaction = undefined
+) => {
+    const product = await model.Product.findByPk(id, {
+        transaction,
+        ...(transaction && {
+            lock: transaction.LOCK.UPDATE,
+        }),
+    });
 
     if (!product) {
         return null;
     }
 
-    return await product.update(data);
+    return await product.update(data, {
+        transaction,
+    });
 };
 
-//Delete Product
-const deleteProduct = async (id) => {
-    const product = await model.Product.findByPk(id);
+// -------------------- Deactivate Product --------------------
+
+const deleteProduct = async (
+    id,
+    transaction = undefined
+) => {
+    const product = await model.Product.findByPk(id, {
+        transaction,
+        ...(transaction && {
+            lock: transaction.LOCK.UPDATE,
+        }),
+    });
 
     if (!product) {
         return null;
     }
 
-    await product.destroy();
+    if (product.status === "INACTIVE") {
+        return product;
+    }
 
-    return product;
+    return await product.update(
+        { status: "INACTIVE" },
+        { transaction }
+    );
 };
 
 export {

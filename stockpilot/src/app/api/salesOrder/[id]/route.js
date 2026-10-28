@@ -21,17 +21,43 @@ const parseOrderId = (id) => {
 const handleError = (error) => {
     console.error("Sales Order API Error:", error);
 
-    const isAuthError =
-        error?.message === "Invalid or Expired Token";
+    const message = error?.message || "";
+
+    let status = 500;
+    let responseMessage = "Internal Server Error";
+
+    if (message === "Invalid or Expired Token") {
+        status = 401;
+        responseMessage = message;
+    } else if (message.includes("Access Denied")) {
+        status = 403;
+        responseMessage = message;
+    } else if (message.includes("Not Found")) {
+        status = 404;
+        responseMessage = message;
+    } else if (
+        message.includes("Invalid") ||
+        message.includes("Required") ||
+        message.includes("Only") ||
+        message.includes("Cannot") ||
+        message.includes("Without Items") ||
+        message.includes("Insufficient Stock") ||
+        message.includes("Must") ||
+        message.includes("Use Dispatch Endpoint") ||
+        message.includes("Valid") ||
+        message.includes("Already") ||
+        message.includes("Exists")
+    ) {
+        status = 400;
+        responseMessage = message;
+    }
 
     return Response.json(
         {
             success: false,
-            message: isAuthError
-                ? "Invalid or Expired Token"
-                : "Internal Server Error",
+            message: responseMessage,
         },
-        { status: isAuthError ? 401 : 500 }
+        { status }
     );
 };
 

@@ -1,90 +1,94 @@
-
 import * as productService from "@/Service/productService";
+
+// -------------------- Error Handler --------------------
 
 const sendErrorResponse = (error, action) => {
     console.error(`${action} Error:`, error);
 
-    let status = 500;
-    let message = "Internal Server Error";
+    const message = error?.message || "";
 
-    if (error.message === "Product Not Found") {
+    let status = 500;
+    let responseMessage = "Internal Server Error";
+
+    if (
+        message === "Product Not Found" ||
+        message === "Category Not Found"
+    ) {
         status = 404;
-        message = error.message;
+        responseMessage = message;
     } else if (
-        error.message.includes("Already Exists") ||
-        error.message.includes("Duplicate")
+        message.includes("Already Exists") ||
+        message.includes("Duplicate") ||
+        message.includes("Already Inactive")
     ) {
         status = 409;
-        message = error.message;
+        responseMessage = message;
     } else if (
-        error.message.includes("Required") ||
-        error.message.includes("Invalid") ||
-        error.message.includes("must be") ||
-        error.message.includes("Must Be")
+        message.includes("Required") ||
+        message.includes("Invalid") ||
+        message.includes("Valid") ||
+        message.includes("Must Be") ||
+        message.includes("must be") ||
+        message.includes("Inactive")
     ) {
         status = 400;
-        message = error.message;
+        responseMessage = message;
     }
 
     return Response.json(
-        { success: false, message },
+        {
+            success: false,
+            message: responseMessage,
+        },
         { status }
     );
 };
 
+// -------------------- Helpers --------------------
+
 const validateProductId = (id) => {
     const productId = Number(id);
 
-    return Number.isInteger(productId) && productId > 0
+    return Number.isSafeInteger(productId) && productId > 0
         ? productId
         : null;
 };
 
+const parseRequestBody = async (request) => {
+    let body;
+
+    try {
+        body = await request.json();
+    } catch {
+        throw new Error("Invalid Request Body");
+    }
+
+    if (
+        !body ||
+        typeof body !== "object" ||
+        Array.isArray(body)
+    ) {
+        throw new Error("Invalid Request Body");
+    }
+
+    return body;
+};
+
+// -------------------- Create Product --------------------
+
 const createProduct = async (request) => {
     try {
-        const body = await request.json();
-
-        if (!body || typeof body !== "object" || Array.isArray(body)) {
-            return Response.json(
-                { success: false, message: "Invalid Request Body" },
-                { status: 400 }
-            );
-        }
-
-        const { name, sku, description, price, status } = body;
-
-        if (
-            typeof name !== "string" || !name.trim() ||
-            typeof sku !== "string" || !sku.trim() ||
-            price === undefined || price === null || price === ""
-        ) {
-            return Response.json(
-                {
-                    success: false,
-                    message: "Name, SKU and Price are Required",
-                },
-                { status: 400 }
-            );
-        }
-
-        const parsedPrice = Number(price);
-
-        if (!Number.isFinite(parsedPrice) || parsedPrice < 0) {
-            return Response.json(
-                {
-                    success: false,
-                    message: "Price Must Be a Non-Negative Number",
-                },
-                { status: 400 }
-            );
-        }
+        const body = await parseRequestBody(request);
 
         const product = await productService.createProduct({
-            name: name.trim(),
-            sku: sku.trim(),
-            description,
-            price: parsedPrice,
-            status,
+            name: body.name,
+            sku: body.sku,
+            description: body.description,
+            price: body.price,
+            categoryId: body.categoryId,
+            ...(body.status !== undefined && {
+                status: body.status,
+            }),
         });
 
         return Response.json(
@@ -100,9 +104,54 @@ const createProduct = async (request) => {
     }
 };
 
-const getAllProducts = async () => {
+// -------------------- Get All Products --------------------
+
+
+
+
+const getAllProducts = async (request) => {
     try {
-        const products = await productService.getAllProducts();
+        const { searchParams } = new URL(request.url);
+        const options = {};
+
+        // Search by name or SKU
+        const search = searchParams.get("search");
+
+        if (search !== null) {
+            options.search = search;
+        }
+
+        // Active-only filter
+        const activeOnly = searchParams.get("activeOnly");
+
+        if (activeOnly !== null) {
+            if (!["true", "false"].includes(activeOnly)) {
+                throw new Error("Invalid Active Only Value");
+            }
+
+            options.activeOnly = activeOnly === "true";
+        }
+
+        // Pagination
+        const limit = searchParams.get("limit");
+        const offset = searchParams.get("offset");
+
+        if (limit !== null) {
+            options.limit = Number(limit);
+        }
+
+        if (offset !== null) {
+            options.offset = Number(offset);
+        }
+
+        // Category filter
+        const categoryId = searchParams.get("categoryId");
+
+        if (categoryId !== null) {
+            options.categoryId = categoryId;
+        }
+
+        const products = await productService.getAllProducts(options);
 
         return Response.json(
             {
@@ -117,12 +166,17 @@ const getAllProducts = async () => {
     }
 };
 
+// -------------------- Get One Product --------------------
+
 const getOneProduct = async (id) => {
     const productId = validateProductId(id);
 
     if (productId === null) {
         return Response.json(
-            { success: false, message: "Invalid Product ID" },
+            {
+                success: false,
+                message: "Invalid Product ID",
+            },
             { status: 400 }
         );
     }
@@ -143,96 +197,27 @@ const getOneProduct = async (id) => {
     }
 };
 
+// -------------------- Update Product --------------------
+
 const updateProduct = async (request, id) => {
     const productId = validateProductId(id);
 
     if (productId === null) {
         return Response.json(
-            { success: false, message: "Invalid Product ID" },
+            {
+                success: false,
+                message: "Invalid Product ID",
+            },
             { status: 400 }
         );
     }
 
     try {
-        const body = await request.json();
-
-        if (!body || typeof body !== "object" || Array.isArray(body)) {
-            return Response.json(
-                { success: false, message: "Invalid Request Body" },
-                { status: 400 }
-            );
-        }
-
-        const allowedFields = ["name", "sku", "description", "price", "status"];
-        const fields = Object.keys(body);
-
-        if (
-            fields.length === 0 ||
-            fields.some((field) => !allowedFields.includes(field))
-        ) {
-            return Response.json(
-                {
-                    success: false,
-                    message: "Invalid or Missing Update Fields",
-                },
-                { status: 400 }
-            );
-        }
-
-        const updateData = { ...body };
-
-        if (updateData.name !== undefined) {
-            if (
-                typeof updateData.name !== "string" ||
-                !updateData.name.trim()
-            ) {
-                return Response.json(
-                    { success: false, message: "Invalid Product Name" },
-                    { status: 400 }
-                );
-            }
-
-            updateData.name = updateData.name.trim();
-        }
-
-        if (updateData.sku !== undefined) {
-            if (
-                typeof updateData.sku !== "string" ||
-                !updateData.sku.trim()
-            ) {
-                return Response.json(
-                    { success: false, message: "Invalid SKU" },
-                    { status: 400 }
-                );
-            }
-
-            updateData.sku = updateData.sku.trim();
-        }
-
-        if (updateData.price !== undefined) {
-            const parsedPrice = Number(updateData.price);
-
-            if (
-                updateData.price === "" ||
-                updateData.price === null ||
-                !Number.isFinite(parsedPrice) ||
-                parsedPrice < 0
-            ) {
-                return Response.json(
-                    {
-                        success: false,
-                        message: "Price Must Be a Non-Negative Number",
-                    },
-                    { status: 400 }
-                );
-            }
-
-            updateData.price = parsedPrice;
-        }
+        const body = await parseRequestBody(request);
 
         const product = await productService.updateProduct(
             productId,
-            updateData
+            { ...body }
         );
 
         return Response.json(
@@ -248,28 +233,34 @@ const updateProduct = async (request, id) => {
     }
 };
 
+// -------------------- Deactivate Product --------------------
+
 const deleteProduct = async (id) => {
     const productId = validateProductId(id);
 
     if (productId === null) {
         return Response.json(
-            { success: false, message: "Invalid Product ID" },
+            {
+                success: false,
+                message: "Invalid Product ID",
+            },
             { status: 400 }
         );
     }
 
     try {
-        await productService.deleteProduct(productId);
+        const product = await productService.deleteProduct(productId);
 
         return Response.json(
             {
                 success: true,
-                message: "Product Deleted Successfully",
+                message: "Product Deactivated Successfully",
+                data: product,
             },
             { status: 200 }
         );
     } catch (error) {
-        return sendErrorResponse(error, "Delete Product");
+        return sendErrorResponse(error, "Deactivate Product");
     }
 };
 

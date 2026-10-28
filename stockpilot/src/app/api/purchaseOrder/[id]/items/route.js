@@ -8,39 +8,55 @@ import * as purchaseOrderItemController from "@/Controller/purchaseOrderItemCont
 const handleError = (error, action) => {
     console.error(`${action} Route Error:`, error);
 
+    const message = error?.message || "";
+
     const isAuthError =
-        error.message === "Invalid or Expired Token";
+        message === "Invalid or Expired Token" ||
+        message === "Unauthorized";
 
     return Response.json(
         {
             success: false,
             message: isAuthError
-                ? "Invalid or Expired Token"
+                ? message
                 : "Internal Server Error",
         },
-        { status: isAuthError ? 401 : 500 }
+        {
+            status: isAuthError ? 401 : 500,
+        }
     );
 };
 
 const parseOrderId = (id) => {
+    if (
+        typeof id !== "string" ||
+        !/^[1-9]\d*$/.test(id)
+    ) {
+        return null;
+    }
+
     const orderId = Number(id);
 
-    return Number.isInteger(orderId) && orderId > 0
+    return Number.isSafeInteger(orderId)
         ? orderId
         : null;
 };
 
+// POST /api/purchase-order/:id/items
 export async function POST(request, { params }) {
     try {
         await connectDB();
-        const user = await authMiddleware(request);
 
+        const user = await authMiddleware(request);
         const { id } = await params;
         const orderId = parseOrderId(id);
 
         if (orderId === null) {
             return Response.json(
-                { success: false, message: "Invalid Purchase Order ID" },
+                {
+                    success: false,
+                    message: "Invalid Purchase Order ID",
+                },
                 { status: 400 }
             );
         }
@@ -55,22 +71,28 @@ export async function POST(request, { params }) {
     }
 }
 
+// GET /api/purchase-order/:id/items
 export async function GET(request, { params }) {
     try {
         await connectDB();
-        const user = await authMiddleware(request);
 
+        const user = await authMiddleware(request);
         const { id } = await params;
         const orderId = parseOrderId(id);
 
         if (orderId === null) {
             return Response.json(
-                { success: false, message: "Invalid Purchase Order ID" },
+                {
+                    success: false,
+                    message: "Invalid Purchase Order ID",
+                },
                 { status: 400 }
             );
         }
 
+        // Pass request so controller can read search and pagination
         return await purchaseOrderItemController.getPurchaseOrderItems(
+            request,
             user,
             orderId
         );

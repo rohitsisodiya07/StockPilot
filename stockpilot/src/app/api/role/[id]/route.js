@@ -1,20 +1,17 @@
+
 export const runtime = "nodejs";
 
 import connectDB from "@/lib/db/connectDB";
 import authMiddleware from "@/Middleware/authMiddleware";
+import roleMiddleware from "@/Middleware/roleMiddleware";
+
 import {
     getOneRole,
     updateRole,
     deleteRole,
 } from "@/Controller/roleController";
 
-const authorizeAdmin = async (request) => {
-    const user = await authMiddleware(request);
-
-    if (Number(user.roleId) !== 1) {
-        throw new Error("Access Denied: Admin Only");
-    }
-};
+const allowAdminAccess = roleMiddleware(1);
 
 const handleError = (error) => {
     console.error("Role API Error:", error);
@@ -23,7 +20,8 @@ const handleError = (error) => {
         error?.message === "Invalid or Expired Token";
 
     const isForbidden =
-        error?.message?.includes("Access Denied");
+        error?.message ===
+        "Forbidden: You do not have permission";
 
     return Response.json(
         {
@@ -31,7 +29,7 @@ const handleError = (error) => {
             message: isAuthError
                 ? "Invalid or Expired Token"
                 : isForbidden
-                    ? error.message
+                    ? "Access Denied: Admin Only"
                     : "Internal Server Error",
         },
         {
@@ -50,10 +48,13 @@ const getRoleId = (id) => {
     return roleId;
 };
 
+// GET: Fetch One Role
 export async function GET(request, { params }) {
     try {
         await connectDB();
-        await authorizeAdmin(request);
+
+        const user = await authMiddleware(request);
+        allowAdminAccess(user);
 
         const { id } = await params;
 
@@ -70,10 +71,13 @@ export async function GET(request, { params }) {
     }
 }
 
+// PUT: Update Role
 export async function PUT(request, { params }) {
     try {
         await connectDB();
-        await authorizeAdmin(request);
+
+        const user = await authMiddleware(request);
+        allowAdminAccess(user);
 
         const { id } = await params;
 
@@ -90,10 +94,13 @@ export async function PUT(request, { params }) {
     }
 }
 
+// DELETE: Delete Role
 export async function DELETE(request, { params }) {
     try {
         await connectDB();
-        await authorizeAdmin(request);
+
+        const user = await authMiddleware(request);
+        allowAdminAccess(user);
 
         const { id } = await params;
 

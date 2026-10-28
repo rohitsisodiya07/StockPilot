@@ -10,8 +10,24 @@ export async function GET(request) {
         await connectDB();
 
         const user = await authMiddleware(request);
+        const { searchParams } = new URL(request.url);
 
-        return await dashboardController.getDashboardAnalytics(user);
+        const filters = {
+            warehouseId: searchParams.get("warehouseId"),
+            userId: searchParams.get("userId"),
+            activityRoleId: searchParams.get("activityRoleId"),
+            startDate: searchParams.get("startDate"),
+            endDate: searchParams.get("endDate"),
+
+            // Pagination for stock movement history
+            page: searchParams.get("page") ?? "1",
+            limit: searchParams.get("limit") ?? "10",
+        };
+
+        return await dashboardController.getDashboardAnalytics(
+            user,
+            filters
+        );
     } catch (error) {
         console.error("Dashboard Route Error:", error);
 
@@ -25,9 +41,7 @@ export async function GET(request) {
                     ? "Invalid or Expired Token"
                     : "Internal Server Error",
             },
-            {
-                status: isAuthError ? 401 : 500,
-            }
+            { status: isAuthError ? 401 : 500 }
         );
     }
 }

@@ -42,6 +42,51 @@ const deleteWarehouse = async (id) => {
     return warehouse;
 };
 
+const getWarehouseDetails = async (id) => {
+    const warehouse = await model.Warehouse.findByPk(id, {
+        include: [
+            {
+                model: model.Inventory,
+                as: "inventory",
+                attributes: [
+                    "id",
+                    "productId",
+                    "quantity",
+                    "reorderLevel",
+                ],
+                include: [
+                    {
+                        model: model.Product,
+                        as: "product",
+                        attributes: ["id", "name", "sku", "price"],
+                    },
+                ],
+            },
+            {
+                model: model.UserWarehouse,
+                as: "userAssignments",
+                attributes: ["id", "userId", "warehouseId"],
+                include: [
+                    {
+                        model: model.User,
+                        as: "user",
+                        attributes: ["id", "name", "email", "roleId"],
+                        include: [
+                            {
+                                model: model.Role,
+                                as: "role",
+                                attributes: ["id", "name"],
+                            },
+                        ],
+                    },
+                ],
+            },
+        ],
+    });
+
+    return warehouse;
+};
+
 export {
     findByName,
     createWarehouse,
@@ -49,4 +94,5 @@ export {
     getOneWarehouse,
     updateWarehouse,
     deleteWarehouse,
+    getWarehouseDetails
 };

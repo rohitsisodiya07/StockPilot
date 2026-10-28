@@ -2,6 +2,14 @@ import * as salesOrderService from "@/Service/salesOrderService";
 
 // -------------------- Common Helpers --------------------
 
+const parseRequestBody = async (request) => {
+    try {
+        return await request.json();
+    } catch {
+        throw new Error("Invalid Request Body");
+    }
+};
+
 const parseOrderId = (id) => {
     const orderId = Number(id);
 
@@ -12,6 +20,7 @@ const parseOrderId = (id) => {
     return orderId;
 };
 
+
 const handleError = (error, action) => {
     console.error(`${action} Error:`, error);
 
@@ -19,21 +28,24 @@ const handleError = (error, action) => {
 
     let status = 500;
 
-    if (
-        message === "Invalid Sales Order ID" ||
+    if (message.includes("Access Denied")) {
+        status = 403;
+    } else if (message.includes("Not Found")) {
+        status = 404;
+    } else if (
         message.includes("Invalid") ||
         message.includes("Required") ||
         message.includes("Only") ||
         message.includes("Without Items") ||
         message.includes("Insufficient Stock") ||
         message.includes("Cannot") ||
-        message.includes("Must")
+        message.includes("Must") ||
+        message.includes("Use Dispatch Endpoint") ||
+        message.includes("Valid") ||
+        message.includes("Exists") ||
+        message.includes("Already")
     ) {
         status = 400;
-    } else if (message.includes("Access Denied")) {
-        status = 403;
-    } else if (message.includes("Not Found")) {
-        status = 404;
     }
 
     return Response.json(
@@ -52,7 +64,7 @@ const handleError = (error, action) => {
 
 const createSalesOrder = async (request, user) => {
     try {
-        const body = await request.json();
+        const body = await parseRequestBody(request);
 
         if (!body || typeof body !== "object" || Array.isArray(body)) {
             throw new Error("Invalid Request Body");
@@ -153,8 +165,7 @@ const getOneSalesOrder = async (user, id) => {
 const updateSalesOrderStatus = async (request, user, id) => {
     try {
         const orderId = parseOrderId(id);
-        const body = await request.json();
-
+        const body = await parseRequestBody(request);
         if (
             !body ||
             typeof body.status !== "string" ||

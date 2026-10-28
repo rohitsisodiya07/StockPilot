@@ -1,25 +1,28 @@
 import { DataTypes } from "sequelize";
-import sequelize from '@/lib/db/sequelize';
-
+import sequelize from "@/lib/db/sequelize";
 
 const Role = sequelize.define(
-    'Role',
+    "Role",
     {
         id: {
             type: DataTypes.INTEGER,
             autoIncrement: true,
-            primaryKey: true
+            primaryKey: true,
         },
+
         name: {
             type: DataTypes.STRING,
             allowNull: false,
-            unique: false
-        }
+            unique: true,
+            validate: {
+                notEmpty: true,
+                len: [2, 100],
+            },
+        },
     },
     {
-        tableName: 'roles',
+        tableName: "roles",
         timestamps: true,
-        deleatedAt: true
     }
 );
 

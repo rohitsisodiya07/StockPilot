@@ -2,40 +2,52 @@ import { DataTypes } from "sequelize";
 import sequelize from "@/lib/db/sequelize";
 
 const User = sequelize.define(
-    'User',
+    "User",
     {
         id: {
             type: DataTypes.INTEGER,
             autoIncrement: true,
-            primaryKey: true
+            primaryKey: true,
         },
+
         name: {
             type: DataTypes.STRING,
-            allowNull: false
+            allowNull: false,
+            validate: {
+                notEmpty: true,
+                len: [2, 255],
+            },
         },
+
         email: {
             type: DataTypes.STRING,
             allowNull: false,
             unique: true,
             validate: {
-                isEmail: true
-            }
+                isEmail: true,
+            },
         },
+
         password: {
             type: DataTypes.STRING,
-            allowNull: false
+            allowNull: false,
         },
+
         roleId: {
             type: DataTypes.INTEGER,
-            allowNull: false
-        }
+            allowNull: false,
+            validate: {
+                isInt: true,
+                min: 1,
+            },
+        },
     },
     {
-
-        tableName: 'users',
+        tableName: "users",
         timestamps: true,
-        deletedAt: true
+        paranoid: true,
+        deletedAt: "deletedAt",
     }
-)
+);
 
 export default User;

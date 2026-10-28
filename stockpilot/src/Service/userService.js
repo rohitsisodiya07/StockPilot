@@ -13,7 +13,14 @@ const createUser = async (data) => {
         throw new Error("Email Already Exists");
     }
 
-    // Check role
+    const allowedRoleIds = [4, 5];
+
+    if (!allowedRoleIds.includes(Number(data.roleId))) {
+        throw new Error(
+            "Only Inventory Manager and Warehouse Staff can be created"
+        );
+    }
+
     const role = await roleRepository.getOneRole(data.roleId);
 
     if (!role) {
@@ -129,8 +136,7 @@ const updateUser = async (id, data) => {
     }
 
     // Check role if roleId is being changed
-    if (data.roleId) {
-
+    if (data.roleId !== undefined) {
         const role = await roleRepository.getOneRole(data.roleId);
 
         if (!role) {

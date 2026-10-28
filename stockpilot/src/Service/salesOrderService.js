@@ -39,7 +39,7 @@ const validateDateRange = (startDate, endDate) => {
 const validateOrderId = (id) => {
     const orderId = Number(id);
 
-    if (!Number.isInteger(orderId) || orderId <= 0) {
+    if (!Number.isSafeInteger(orderId) || orderId <= 0) {
         throw new Error("Invalid Sales Order ID");
     }
 
@@ -60,15 +60,18 @@ const calculateTotalAmount = (items = []) => {
 // -------------------- Create Sales Order --------------------
 
 const createSalesOrder = async (userId, roleId, data) => {
-    const { warehouseId, customerName, customerEmail } = data;
+    if (!data || typeof data !== "object" || Array.isArray(data)) {
+        throw new Error("Invalid Sales Order Data");
+    }
 
+    const { warehouseId, customerName, customerEmail } = data;
     const parsedWarehouseId = Number(warehouseId);
 
     if (
         warehouseId === undefined ||
         warehouseId === null ||
         warehouseId === "" ||
-        !Number.isInteger(parsedWarehouseId) ||
+        !Number.isSafeInteger(parsedWarehouseId) ||
         parsedWarehouseId <= 0
     ) {
         throw new Error("Valid Warehouse ID Is Required");
@@ -81,10 +84,26 @@ const createSalesOrder = async (userId, roleId, data) => {
         throw new Error("Customer Name Is Required");
     }
 
+    if (customerName.trim().length > 255) {
+        throw new Error("Customer Name Is Too Long");
+    }
+
     if (
         customerEmail !== undefined &&
         customerEmail !== null &&
         typeof customerEmail !== "string"
+    ) {
+        throw new Error("Invalid Customer Email");
+    }
+
+    const normalizedEmail = customerEmail?.trim() || null;
+
+    if (
+        normalizedEmail &&
+        (
+            normalizedEmail.length > 255 ||
+            !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)
+        )
     ) {
         throw new Error("Invalid Customer Email");
     }
@@ -107,7 +126,7 @@ const createSalesOrder = async (userId, roleId, data) => {
         warehouseId: parsedWarehouseId,
         createdBy: userId,
         customerName: customerName.trim(),
-        customerEmail: customerEmail?.trim() || null,
+        customerEmail: normalizedEmail,
         status: "DRAFT",
     });
 };
@@ -161,9 +180,9 @@ const getAllSalesOrders = async (
     const parsedLimit = Number(limit);
 
     if (
-        !Number.isInteger(parsedPage) ||
+        !Number.isSafeInteger(parsedPage) ||
         parsedPage < 1 ||
-        !Number.isInteger(parsedLimit) ||
+        !Number.isSafeInteger(parsedLimit) ||
         parsedLimit < 1
     ) {
         throw new Error("Invalid Pagination");
@@ -175,7 +194,10 @@ const getAllSalesOrders = async (
 
     const offset = (page - 1) * limit;
 
-    // Determine which warehouses the user can access.
+    if (!Number.isSafeInteger(offset)) {
+        throw new Error("Invalid Pagination");
+    }
+
     let warehouseIds = null;
 
     if (Number(roleId) !== 1) {
@@ -187,12 +209,15 @@ const getAllSalesOrders = async (
         );
     }
 
-    // Validate a requested warehouse and enforce access.
-    if (warehouseId !== null) {
+    if (
+        warehouseId !== null &&
+        warehouseId !== undefined &&
+        warehouseId !== ""
+    ) {
         const parsedWarehouseId = Number(warehouseId);
 
         if (
-            !Number.isInteger(parsedWarehouseId) ||
+            !Number.isSafeInteger(parsedWarehouseId) ||
             parsedWarehouseId <= 0
         ) {
             throw new Error("Invalid Warehouse ID");
@@ -215,7 +240,6 @@ const getAllSalesOrders = async (
         warehouseId = parsedWarehouseId;
     }
 
-    // Never query all orders for a non-admin without assignments.
     if (
         Array.isArray(warehouseIds) &&
         warehouseIds.length === 0
@@ -318,7 +342,6 @@ const updateSalesOrderStatus = async (
         throw new Error("Invalid Sales Order Status");
     }
 
-    // Lock the order to prevent simultaneous status transitions.
     const transaction = await sequelize.transaction();
 
     try {
@@ -362,9 +385,7 @@ const updateSalesOrderStatus = async (
 
         if (status === "CANCELLED") {
             if (
-                !["DRAFT", "CONFIRMED"].includes(
-                    salesOrder.status
-                )
+                !["DRAFT", "CONFIRMED"].includes(salesOrder.status)
             ) {
                 throw new Error(
                     "Only Draft or Confirmed Orders Can Be Cancelled"
@@ -372,8 +393,6 @@ const updateSalesOrderStatus = async (
             }
         }
 
-        // Dispatch must use dispatchSalesOrder so stock deduction
-        // and movement creation happen in the same transaction.
         if (status === "DISPATCHED") {
             throw new Error(
                 "Use Dispatch Endpoint to Dispatch Sales Orders"
@@ -440,31 +459,70 @@ const dispatchSalesOrder = async (userId, roleId, id) => {
             );
         }
 
+        // Combine repeated products to avoid processing the same
+        // inventory record multiple times.
+        const quantitiesByProduct = new Map();
+
         for (const item of salesOrder.items) {
+            const productId = Number(item.productId);
+            const quantity = Number(item.quantity);
+
+            if (
+                !Number.isSafeInteger(productId) ||
+                productId <= 0 ||
+                !Number.isSafeInteger(quantity) ||
+                quantity <= 0
+            ) {
+                throw new Error("Invalid Sales Order Item");
+            }
+
+            const combinedQuantity =
+                (quantitiesByProduct.get(productId) || 0) + quantity;
+
+            if (!Number.isSafeInteger(combinedQuantity)) {
+                throw new Error("Invalid Sales Order Item Quantity");
+            }
+
+            quantitiesByProduct.set(productId, combinedQuantity);
+        }
+
+        for (const [productId, requiredQuantity] of quantitiesByProduct) {
             const inventory = await model.Inventory.findOne({
                 where: {
-                    productId: item.productId,
+                    productId,
                     warehouseId: salesOrder.warehouseId,
                 },
                 transaction,
                 lock: transaction.LOCK.UPDATE,
             });
 
-            if (
-                !inventory ||
-                Number(inventory.quantity) < Number(item.quantity)
-            ) {
+            if (!inventory) {
                 throw new Error(
-                    `Insufficient Stock for Product ID ${item.productId}`
+                    `Inventory Not Found for Product ID ${productId}`
                 );
             }
 
+            const currentQuantity = Number(inventory.quantity);
+
+            if (
+                !Number.isSafeInteger(currentQuantity) ||
+                currentQuantity < 0
+            ) {
+                throw new Error(
+                    `Invalid Inventory Quantity for Product ID ${productId}`
+                );
+            }
+
+            if (currentQuantity < requiredQuantity) {
+                throw new Error(
+                    `Insufficient Stock for Product ID ${productId}`
+                );
+            }
+
+            const newQuantity = currentQuantity - requiredQuantity;
+
             await inventory.update(
-                {
-                    quantity:
-                        Number(inventory.quantity) -
-                        Number(item.quantity),
-                },
+                { quantity: newQuantity },
                 { transaction }
             );
 
@@ -472,7 +530,7 @@ const dispatchSalesOrder = async (userId, roleId, id) => {
                 {
                     inventoryId: inventory.id,
                     type: "OUT",
-                    quantity: item.quantity,
+                    quantity: requiredQuantity,
                     note: `Sales Order #${orderId} dispatched`,
                     userId,
                 },

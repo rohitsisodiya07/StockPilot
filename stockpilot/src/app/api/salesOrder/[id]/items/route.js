@@ -48,6 +48,7 @@ export async function POST(request, { params }) {
         await connectDB();
 
         const user = await authMiddleware(request);
+
         const { id } = await params;
         const orderId = parseOrderId(id);
 
@@ -70,6 +71,7 @@ export async function GET(request, { params }) {
         await connectDB();
 
         const user = await authMiddleware(request);
+
         const { id } = await params;
         const orderId = parseOrderId(id);
 

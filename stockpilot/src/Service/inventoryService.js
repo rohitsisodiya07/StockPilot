@@ -61,7 +61,6 @@ const createInventory = async (userId, roleId, data) => {
 };
 
 
-
 const getWarehouseInventory = async (userId, roleId, warehouseId) => {
     if (!Number.isInteger(warehouseId) || warehouseId <= 0) {
         throw new Error("Invalid Warehouse ID");
@@ -83,9 +82,44 @@ const getWarehouseInventory = async (userId, roleId, warehouseId) => {
 };
 
 
-
 const updateInventory = async (userId, roleId, id, data) => {
-    const inventory = await inventoryRepository.getOneInventory(id);
+    const inventoryId = Number(id);
+
+    if (!Number.isInteger(inventoryId) || inventoryId <= 0) {
+        throw new Error("Invalid Inventory ID");
+    }
+
+    if (
+        !data ||
+        typeof data !== "object" ||
+        Array.isArray(data)
+    ) {
+        throw new Error("Invalid Update Data");
+    }
+
+    // Quantity changes must go through stockMovementService.
+    if (data.quantity !== undefined) {
+        throw new Error(
+            "Quantity Must Be Updated Through Stock Movement"
+        );
+    }
+
+    if (data.reorderLevel === undefined) {
+        throw new Error("Reorder Level Is Required");
+    }
+
+    if (
+        !Number.isInteger(data.reorderLevel) ||
+        data.reorderLevel < 0
+    ) {
+        throw new Error(
+            "Reorder Level Must Be A Non-Negative Integer"
+        );
+    }
+
+    const inventory = await inventoryRepository.getOneInventory(
+        inventoryId
+    );
 
     if (!inventory) {
         throw new Error("Inventory Not Found");
@@ -97,34 +131,12 @@ const updateInventory = async (userId, roleId, id, data) => {
         inventory.warehouseId
     );
 
-    const updateData = {};
-
-    if (data.quantity !== undefined) {
-        if (!Number.isInteger(data.quantity) || data.quantity < 0) {
-            throw new Error("Quantity Must Be A Non-Negative Integer");
+    return await inventoryRepository.updateInventory(
+        inventoryId,
+        {
+            reorderLevel: data.reorderLevel,
         }
-
-        updateData.quantity = data.quantity;
-    }
-
-    if (data.reorderLevel !== undefined) {
-        if (
-            !Number.isInteger(data.reorderLevel) ||
-            data.reorderLevel < 0
-        ) {
-            throw new Error(
-                "Reorder Level Must Be A Non-Negative Integer"
-            );
-        }
-
-        updateData.reorderLevel = data.reorderLevel;
-    }
-
-    if (Object.keys(updateData).length === 0) {
-        throw new Error("Quantity or Reorder Level Is Required");
-    }
-
-    return await inventoryRepository.updateInventory(id, updateData);
+    );
 };
 
 
@@ -143,7 +155,6 @@ const deleteInventory = async (userId, roleId, id) => {
 
     return await inventoryRepository.deleteInventory(id);
 };
-
 
 
 const getLowStockInventory = async (userId, roleId, warehouseId) => {
@@ -166,9 +177,75 @@ const getLowStockInventory = async (userId, roleId, warehouseId) => {
     return await inventoryRepository.getLowStockInventory(warehouseId);
 };
 
+const getAllInventory = async (userId, roleId) => {
+    const parsedUserId = Number(userId);
+    const parsedRoleId = Number(roleId);
+
+    if (
+        !Number.isInteger(parsedUserId) ||
+        parsedUserId <= 0 ||
+        !Number.isInteger(parsedRoleId) ||
+        parsedRoleId <= 0
+    ) {
+        throw new Error("Invalid User or Role ID");
+    }
+
+    // Admin can view inventory from all warehouses.
+    if (parsedRoleId === 1) {
+        return await inventoryRepository.getAllInventory();
+    }
+
+    // Only Inventory Manager and Warehouse Staff are allowed.
+    if (![4, 5].includes(parsedRoleId)) {
+        throw new Error("Access Denied: Role Not Allowed");
+    }
+
+    const assignments =
+        await userWarehouseService.getUserWarehouses(parsedUserId);
+
+    const warehouseIds = assignments.map(
+        (assignment) => Number(assignment.warehouseId)
+    );
+
+    if (warehouseIds.length === 0) {
+        return [];
+    }
+
+    const inventoryRecords = await Promise.all(
+        warehouseIds.map((warehouseId) =>
+            inventoryRepository.getWarehouseInventory(warehouseId)
+        )
+    );
+
+    return inventoryRecords.flat();
+};
+
+const getInventoryById = async (userId, roleId, inventoryId) => {
+    if (!Number.isInteger(inventoryId) || inventoryId <= 0) {
+        throw new Error("Invalid Inventory ID");
+    }
+
+    const inventory = await inventoryRepository.getOneInventory(
+        inventoryId
+    );
+
+    if (!inventory) {
+        throw new Error("Inventory Not Found");
+    }
+
+    await userWarehouseService.checkWarehouseAccess(
+        userId,
+        roleId,
+        inventory.warehouseId
+    );
+
+    return inventory;
+};
 
 export {
     createInventory,
+    getAllInventory,
+    getInventoryById,
     getWarehouseInventory,
     updateInventory,
     deleteInventory,

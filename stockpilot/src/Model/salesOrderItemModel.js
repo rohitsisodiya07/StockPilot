@@ -1,4 +1,3 @@
-
 import { DataTypes } from "sequelize";
 import sequelize from "@/lib/db/sequelize";
 
@@ -10,26 +9,41 @@ const SalesOrderItem = sequelize.define(
             autoIncrement: true,
             primaryKey: true,
         },
+
         salesOrderId: {
             type: DataTypes.INTEGER,
             allowNull: false,
+            validate: {
+                isInt: true,
+                min: 1,
+            },
         },
+
         productId: {
             type: DataTypes.INTEGER,
             allowNull: false,
+            validate: {
+                isInt: true,
+                min: 1,
+            },
         },
+
         quantity: {
             type: DataTypes.INTEGER,
             allowNull: false,
             validate: {
+                isInt: true,
                 min: 1,
             },
         },
+
         unitPrice: {
             type: DataTypes.DECIMAL(10, 2),
             allowNull: false,
             validate: {
                 min: 0,
+                isDecimal: true,
+                max: 99999999.99,
             },
         },
     },

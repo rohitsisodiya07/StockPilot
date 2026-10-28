@@ -62,10 +62,58 @@ const deleteWarehouse = async (id) => {
     return true;
 };
 
+const getWarehouseDetails = async (id) => {
+    const warehouse = await warehouseRepository.getWarehouseDetails(id);
+
+    if (!warehouse) {
+        throw new Error("Warehouse Not Found");
+    }
+
+    const warehouseData = warehouse.toJSON();
+
+    const inventory = warehouseData.inventory || [];
+    const assignments = warehouseData.userAssignments || [];
+
+    const lowStockItems = inventory.filter(
+        (item) => item.quantity <= item.reorderLevel
+    );
+
+    const totalProducts = inventory.length;
+
+    const totalInventoryUnits = inventory.reduce(
+        (total, item) => total + Number(item.quantity || 0),
+        0
+    );
+
+    return {
+        ...warehouseData,
+
+        inventorySummary: {
+            totalProducts,
+            totalInventoryUnits,
+            lowStockCount: lowStockItems.length,
+        },
+
+        lowStockItems,
+
+        assignedUsers: assignments
+            .filter((assignment) => assignment.user)
+            .map((assignment) => ({
+                id: assignment.user.id,
+                name: assignment.user.name,
+                email: assignment.user.email,
+                roleId: assignment.user.roleId,
+                role: assignment.user.role?.name || "Unknown",
+            })),
+    };
+};
+
+
 export {
     createWarehouse,
     getAllWarehouses,
     getOneWarehouse,
     updateWarehouse,
     deleteWarehouse,
+    getWarehouseDetails
 };

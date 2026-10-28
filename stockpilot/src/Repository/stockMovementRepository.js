@@ -1,41 +1,56 @@
 import * as model from "@/Model/index";
 
-//Creates a stock movement record
+// -------------------- Create Stock Movement --------------------
+
 const createStockMovement = async (data, transaction) => {
-    return await model.StockMovement.create(data, { transaction });
+    return await model.StockMovement.create(data, {
+        transaction,
+    });
 };
 
-//Retrieves all movements for an inventory record, newest first.
+// -------------------- Get Inventory Movements --------------------
 
-const getInventoryMovements = async (inventoryId) => {
+const getInventoryMovements = async (
+    inventoryId,
+    transaction = undefined
+) => {
     return await model.StockMovement.findAll({
         where: { inventoryId },
+
         attributes: {
             exclude: ["createdAt", "updatedAt"],
         },
+
         include: [
             {
                 model: model.User,
                 as: "user",
-                attributes: {
-                    exclude: ["password", "createdAt", "updatedAt"],
-                },
+                attributes: ["id", "name", "email", "roleId"],
             },
         ],
+
         order: [["createdAt", "DESC"]],
+
+        ...(transaction ? { transaction } : {}),
     });
 };
 
+// -------------------- Get One Stock Movement --------------------
 
-const getOneStockMovement = async (id) => {
+const getOneStockMovement = async (
+    id,
+    transaction = undefined
+) => {
     return await model.StockMovement.findByPk(id, {
         include: [
             {
                 model: model.User,
                 as: "user",
-                attributes: { exclude: ["password"] },
+                attributes: ["id", "name", "email", "roleId"],
             },
         ],
+
+        ...(transaction ? { transaction } : {}),
     });
 };
 

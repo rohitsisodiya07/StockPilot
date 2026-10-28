@@ -238,7 +238,6 @@ const checkWarehouseAccess = async (request, user, warehouseId) => {
     }
 };
 
-
 export {
     assignWarehouse,
     getUserWarehouses,

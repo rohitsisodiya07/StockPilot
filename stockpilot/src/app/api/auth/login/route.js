@@ -10,7 +10,7 @@ export async function POST(request) {
 
         return await loginUser(request);
     } catch (error) {
-        console.error("Login Route Error:", error.message);
+        console.error("Login Route Error:", error);
 
         return Response.json(
             {

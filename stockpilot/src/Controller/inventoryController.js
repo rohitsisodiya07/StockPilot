@@ -78,6 +78,84 @@ const createInventory = async (request, user) => {
     }
 };
 
+const getAllInventory = async (user) => {
+    try {
+        const data = await inventoryService.getAllInventory(
+            user.id,
+            user.roleId
+        );
+
+        return Response.json({
+            success: true,
+            message: "Inventory Fetched Successfully",
+            data,
+        });
+    } catch (error) {
+        console.error("Get All Inventory Error:", error);
+
+        const status =
+            error.message.includes("Access Denied") ? 403 :
+                error.message.includes("Not Found") ? 404 :
+                    error.message.includes("Invalid") ? 400 : 500;
+
+        return Response.json(
+            {
+                success: false,
+                message:
+                    status === 500
+                        ? "Internal Server Error"
+                        : error.message,
+            },
+            { status }
+        );
+    }
+};
+
+const getInventoryById = async (user, id) => {
+    try {
+        const inventoryId = Number(id);
+
+        if (!Number.isInteger(inventoryId) || inventoryId <= 0) {
+            return Response.json(
+                {
+                    success: false,
+                    message: "Invalid Inventory ID",
+                },
+                { status: 400 }
+            );
+        }
+
+        const data = await inventoryService.getInventoryById(
+            user.id,
+            user.roleId,
+            inventoryId
+        );
+
+        return Response.json({
+            success: true,
+            message: "Inventory Fetched Successfully",
+            data,
+        });
+    } catch (error) {
+        console.error("Get Inventory By ID Error:", error);
+
+        const status =
+            error.message.includes("Access Denied") ? 403 :
+                error.message.includes("Not Found") ? 404 :
+                    error.message.includes("Invalid") ? 400 : 500;
+
+        return Response.json(
+            {
+                success: false,
+                message: status === 500
+                    ? "Internal Server Error"
+                    : error.message,
+            },
+            { status }
+        );
+    }
+};
+
 
 const getWarehouseInventory = async (user, warehouseId) => {
     try {
@@ -115,8 +193,8 @@ const getWarehouseInventory = async (user, warehouseId) => {
 
         const status =
             error.message.includes("Access Denied") ? 403 :
-            error.message.includes("Not Found") ? 404 :
-            error.message.includes("Invalid") ? 400 : 500;
+                error.message.includes("Not Found") ? 404 :
+                    error.message.includes("Invalid") ? 400 : 500;
 
         return Response.json(
             {
@@ -138,43 +216,58 @@ const updateInventory = async (request, user, id) => {
 
         if (!Number.isInteger(inventoryId) || inventoryId <= 0) {
             return Response.json(
-                {
-                    success: false,
-                    message: "Invalid Inventory ID",
-                },
+                { success: false, message: "Invalid Inventory ID" },
                 { status: 400 }
             );
         }
 
-        const body = await request.json();
+        let body;
 
-        if (
-            !body ||
-            typeof body !== "object" ||
-            Array.isArray(body)
-        ) {
+        try {
+            body = await request.json();
+        } catch {
             return Response.json(
-                {
-                    success: false,
-                    message: "Invalid Request Body",
-                },
+                { success: false, message: "Invalid JSON Body" },
                 { status: 400 }
             );
         }
 
-        const allowedFields = ["quantity", "reorderLevel"];
+        if (!body || typeof body !== "object" || Array.isArray(body)) {
+            return Response.json(
+                { success: false, message: "Invalid Request Body" },
+                { status: 400 }
+            );
+        }
+
+        const allowedFields = ["reorderLevel"];
         const providedFields = Object.keys(body);
 
         if (
-            providedFields.length === 0 ||
-            providedFields.some(
-                (field) => !allowedFields.includes(field)
-            )
+            providedFields.length !== 1 ||
+            providedFields.some((field) => !allowedFields.includes(field))
         ) {
             return Response.json(
                 {
                     success: false,
-                    message: "Invalid or Missing Update Fields",
+                    message: "Only Reorder Level Can Be Updated",
+                },
+                { status: 400 }
+            );
+        }
+
+        const value = body.reorderLevel;
+
+        if (
+            value === undefined ||
+            value === null ||
+            value === "" ||
+            !Number.isInteger(Number(value)) ||
+            Number(value) < 0
+        ) {
+            return Response.json(
+                {
+                    success: false,
+                    message: "Reorder Level Must Be A Non-Negative Integer",
                 },
                 { status: 400 }
             );
@@ -185,15 +278,7 @@ const updateInventory = async (request, user, id) => {
             user.roleId,
             inventoryId,
             {
-                quantity:
-                    body.quantity === undefined
-                        ? undefined
-                        : Number(body.quantity),
-
-                reorderLevel:
-                    body.reorderLevel === undefined
-                        ? undefined
-                        : Number(body.reorderLevel),
+                reorderLevel: Number(value),
             }
         );
 
@@ -208,29 +293,26 @@ const updateInventory = async (request, user, id) => {
     } catch (error) {
         console.error("Update Inventory Error:", error);
 
+        const message = error.message || "";
+
         const status =
-            error.message.includes("Access Denied") ? 403 :
-            error.message === "Inventory Not Found" ? 404 :
-            error.message.includes("Not Found") ? 404 :
-            error.message.includes("Required") ||
-            error.message.includes("Non-Negative") ||
-            error.message.includes("Invalid") ? 400 : 500;
+            message.includes("Access Denied") ? 403 :
+                message.includes("Not Found") ? 404 :
+                    message.includes("Invalid") ||
+                        message.includes("Required") ||
+                        message.includes("Non-Negative") ? 400 : 500;
 
         return Response.json(
             {
                 success: false,
-                message:
-                    status === 500
-                        ? "Internal Server Error"
-                        : error.message,
+                message: status === 500
+                    ? "Internal Server Error"
+                    : message,
             },
             { status }
         );
     }
 };
-
-
-
 
 const deleteInventory = async (user, id) => {
     try {
@@ -264,8 +346,8 @@ const deleteInventory = async (user, id) => {
 
         const status =
             error.message.includes("Access Denied") ? 403 :
-            error.message === "Inventory Not Found" ? 404 :
-            error.message.includes("Not Found") ? 404 : 500;
+                error.message === "Inventory Not Found" ? 404 :
+                    error.message.includes("Not Found") ? 404 : 500;
 
         return Response.json(
             {
@@ -279,9 +361,6 @@ const deleteInventory = async (user, id) => {
         );
     }
 };
-
-
-
 
 const getLowStockInventory = async (user, warehouseId) => {
     try {
@@ -316,8 +395,8 @@ const getLowStockInventory = async (user, warehouseId) => {
 
         const status =
             error.message.includes("Access Denied") ? 403 :
-            error.message.includes("Not Found") ? 404 :
-            error.message.includes("Invalid") ? 400 : 500;
+                error.message.includes("Not Found") ? 404 :
+                    error.message.includes("Invalid") ? 400 : 500;
 
         return Response.json(
             {
@@ -332,11 +411,10 @@ const getLowStockInventory = async (user, warehouseId) => {
     }
 };
 
-
-
-
 export {
     createInventory,
+    getAllInventory,
+    getInventoryById,
     getWarehouseInventory,
     updateInventory,
     deleteInventory,

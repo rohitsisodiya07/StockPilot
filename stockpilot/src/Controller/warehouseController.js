@@ -210,10 +210,41 @@ const deleteWarehouse = async (id) => {
     }
 };
 
+const getWarehouseDetails = async (id) => {
+    try {
+        const warehouse =
+            await warehouseService.getWarehouseDetails(id);
+
+        return Response.json(
+            {
+                success: true,
+                message: "Warehouse Details Fetched Successfully",
+                data: warehouse,
+            },
+            { status: 200 }
+        );
+    } catch (error) {
+        console.error("Get Warehouse Details Error:", error);
+
+        const isNotFound =
+            error.message === "Warehouse Not Found";
+
+        return Response.json(
+            {
+                success: false,
+                message: isNotFound
+                    ? "Warehouse Not Found"
+                    : "Failed to Fetch Warehouse Details",
+            },
+            { status: isNotFound ? 404 : 500 }
+        );
+    }
+};
 export {
     createWarehouse,
     getAllWarehouses,
     getOneWarehouse,
     updateWarehouse,
     deleteWarehouse,
+    getWarehouseDetails
 };

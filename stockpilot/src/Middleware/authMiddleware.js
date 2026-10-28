@@ -1,38 +1,56 @@
+
 import jwt from "jsonwebtoken";
+import { User } from "@/Model/index";
 
 const authMiddleware = async (request) => {
-    try {
-        const authHeader = request.headers.get("authorization");
+    const authHeader = request.headers.get("authorization");
 
-        console.log("AUTH HEADER:", authHeader);
-
-        if (!authHeader) {
-            throw new Error("Authorization Header Required");
-        }
-
-        const token = authHeader.split(" ")[1];
-
-        console.log("TOKEN:", token);
-
-        if (!token) {
-            throw new Error("Token Required");
-        }
-
-        const decoded = jwt.verify(
-            token,
-            process.env.JWT_SECRET
-        );
-
-        console.log("DECODED USER:", decoded);
-        console.log("USER ROLE ID:", decoded.roleId);
-
-
-        return decoded;
-
-    } catch (error) {
-        console.log("JWT ERROR:", error.message);
+    if (!authHeader) {
         throw new Error("Invalid or Expired Token");
     }
+
+    const [scheme, token, ...extra] =
+        authHeader.trim().split(/\s+/);
+
+    if (
+        scheme?.toLowerCase() !== "bearer" ||
+        !token ||
+        extra.length > 0
+    ) {
+        throw new Error("Invalid or Expired Token");
+    }
+
+    const secret = process.env.JWT_SECRET;
+
+    if (!secret) {
+        throw new Error("JWT configuration missing");
+    }
+
+    let decoded;
+
+    try {
+        decoded = jwt.verify(token, secret);
+    } catch {
+        throw new Error("Invalid or Expired Token");
+    }
+
+    // Validate the user against the database.
+    // Sequelize paranoid mode excludes soft-deleted users.
+    const user = await User.findByPk(decoded.id, {
+        attributes: ["id", "name", "email", "roleId"],
+    });
+
+    if (!user) {
+        throw new Error("Invalid or Expired Token");
+    }
+
+    // Return the current database role, not the potentially stale JWT role.
+    return {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        roleId: user.roleId,
+    };
 };
 
 export default authMiddleware;

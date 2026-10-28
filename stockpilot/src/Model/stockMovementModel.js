@@ -9,28 +9,45 @@ const StockMovement = sequelize.define(
             autoIncrement: true,
             primaryKey: true,
         },
-        inventoryId: {//Identifies the inventory record whose stock is changing.
+
+        inventoryId: {
             type: DataTypes.INTEGER,
             allowNull: false,
+            validate: {
+                isInt: true,
+                min: 1,
+            },
         },
+
         type: {
             type: DataTypes.ENUM("IN", "OUT"),
             allowNull: false,
         },
+
         quantity: {
             type: DataTypes.INTEGER,
             allowNull: false,
             validate: {
+                isInt: true,
                 min: 1,
             },
         },
+
         note: {
             type: DataTypes.STRING,
             allowNull: true,
+            validate: {
+                len: [0, 255],
+            },
         },
-        userId: {//Identifies the user who performed the stock movement.
+
+        userId: {
             type: DataTypes.INTEGER,
             allowNull: false,
+            validate: {
+                isInt: true,
+                min: 1,
+            },
         },
     },
     {

@@ -23,13 +23,6 @@ const getAllSalesOrders = async (
     sortBy = "createdAt",
     sortOrder = "DESC"
 ) => {
-    // Empty assignments must never return global results.
-    if (Array.isArray(warehouseIds) && warehouseIds.length === 0) {
-        return {
-            rows: [],
-            count: 0,
-        };
-    }
 
     const allowedSortFields = [
         "createdAt",

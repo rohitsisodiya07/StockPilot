@@ -1,6 +1,6 @@
 import * as model from "@/Model/index";
 
-//Check karta hai user already warehouse se assigned hai ya nahi
+// Check whether a user is assigned to a warehouse
 const findAssignment = async (userId, warehouseId) => {
     return await model.UserWarehouse.findOne({
         where: {
@@ -10,14 +10,16 @@ const findAssignment = async (userId, warehouseId) => {
     });
 };
 
-//User ko warehouse assign karta hai
-const createAssignment = async (data) => {
-    return await model.UserWarehouse.create(data);
+// Assign a user to a warehouse
+const createAssignment = async (data, transaction = undefined) => {
+    return await model.UserWarehouse.create(data, {
+        ...(transaction ? { transaction } : {}),
+    });
 };
 
-//Kisi user ke saare assigned warehouses
+// Get all warehouses assigned to a user
 const getUserWarehouses = async (userId) => {
-    const result = await model.UserWarehouse.findAll({
+    return await model.UserWarehouse.findAll({
         where: {
             userId,
         },
@@ -27,38 +29,57 @@ const getUserWarehouses = async (userId) => {
                 model: model.Warehouse,
                 as: "warehouse",
                 attributes: {
-                    exclude: ["createdAt", "updatedAt", "deletedAt"],
+                    exclude: [
+                        "createdAt",
+                        "updatedAt",
+                        "deletedAt",
+                    ],
                 },
             },
         ],
+        order: [["warehouseId", "ASC"]],
     });
-
-    return result;
 };
 
-//Kisi warehouse mein assigned users
+// Get users assigned to a warehouse
 const getWarehouseUsers = async (warehouseId) => {
     return await model.UserWarehouse.findAll({
         where: {
             warehouseId,
         },
+        attributes: ["id", "userId", "warehouseId"],
+        include: [
+            {
+                model: model.User,
+                as: "user",
+                attributes: ["id", "name", "email", "roleId"],
+            },
+        ],
+        order: [["userId", "ASC"]],
     });
 };
 
-// User ko warehouse se unassign karta hai
-const deleteAssignment = async (userId, warehouseId) => {
+// Remove a user's warehouse assignment
+const deleteAssignment = async (
+    userId,
+    warehouseId,
+    transaction = undefined
+) => {
     const assignment = await model.UserWarehouse.findOne({
         where: {
             userId,
             warehouseId,
         },
+        ...(transaction ? { transaction } : {}),
     });
 
     if (!assignment) {
         return null;
     }
 
-    await assignment.destroy();
+    await assignment.destroy({
+        ...(transaction ? { transaction } : {}),
+    });
 
     return assignment;
 };

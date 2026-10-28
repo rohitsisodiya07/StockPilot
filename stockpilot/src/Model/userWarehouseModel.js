@@ -9,18 +9,34 @@ const UserWarehouse = sequelize.define(
             autoIncrement: true,
             primaryKey: true,
         },
+
         userId: {
             type: DataTypes.INTEGER,
             allowNull: false,
+            validate: {
+                isInt: true,
+                min: 1,
+            },
         },
+
         warehouseId: {
             type: DataTypes.INTEGER,
             allowNull: false,
+            validate: {
+                isInt: true,
+                min: 1,
+            },
         },
     },
     {
         tableName: "user_warehouses",
         timestamps: true,
+        indexes: [
+            {
+                unique: true,
+                fields: ["userId", "warehouseId"],
+            },
+        ],
     }
 );
 

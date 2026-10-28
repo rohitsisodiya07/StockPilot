@@ -1,21 +1,16 @@
+
 export const runtime = "nodejs";
 
 import connectDB from "@/lib/db/connectDB";
 import authMiddleware from "@/Middleware/authMiddleware";
+import roleMiddleware from "@/Middleware/roleMiddleware";
+
 import {
     createRole,
     getAllRoles,
 } from "@/Controller/roleController";
 
-const authorizeAdmin = async (request) => {
-    const user = await authMiddleware(request);
-
-    if (Number(user.roleId) !== 1) {
-        throw new Error("Access Denied: Admin Only");
-    }
-
-    return user;
-};
+const allowAdminAccess = roleMiddleware(1);
 
 const handleError = (error) => {
     console.error("Role API Error:", error);
@@ -24,7 +19,8 @@ const handleError = (error) => {
         error?.message === "Invalid or Expired Token";
 
     const isForbidden =
-        error?.message?.includes("Access Denied");
+        error?.message ===
+        "Forbidden: You do not have permission";
 
     return Response.json(
         {
@@ -32,7 +28,7 @@ const handleError = (error) => {
             message: isAuthError
                 ? "Invalid or Expired Token"
                 : isForbidden
-                    ? error.message
+                    ? "Access Denied: Admin Only"
                     : "Internal Server Error",
         },
         {
@@ -41,10 +37,13 @@ const handleError = (error) => {
     );
 };
 
+// POST: Create Role (ADMIN only)
 export async function POST(request) {
     try {
         await connectDB();
-        await authorizeAdmin(request);
+
+        const user = await authMiddleware(request);
+        allowAdminAccess(user);
 
         return await createRole(request);
     } catch (error) {
@@ -52,10 +51,13 @@ export async function POST(request) {
     }
 }
 
+// GET: Fetch All Roles (ADMIN only)
 export async function GET(request) {
     try {
         await connectDB();
-        await authorizeAdmin(request);
+
+        const user = await authMiddleware(request);
+        allowAdminAccess(user);
 
         return await getAllRoles();
     } catch (error) {

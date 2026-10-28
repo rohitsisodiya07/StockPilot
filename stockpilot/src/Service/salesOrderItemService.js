@@ -14,7 +14,7 @@ const validatePositiveInteger = (value, fieldName) => {
         value === undefined ||
         value === null ||
         value === "" ||
-        !Number.isInteger(number) ||
+        !Number.isSafeInteger(number) ||
         number <= 0
     ) {
         throw new Error(`Valid ${fieldName} Is Required`);
@@ -31,42 +31,34 @@ const createSalesOrderItem = async (
     salesOrderId,
     data
 ) => {
+    if (
+        !data ||
+        typeof data !== "object" ||
+        Array.isArray(data)
+    ) {
+        throw new Error("Invalid Sales Order Item Data");
+    }
+
     const orderId = validatePositiveInteger(
         salesOrderId,
         "Sales Order ID"
     );
 
     const productId = validatePositiveInteger(
-        data?.productId,
+        data.productId,
         "Product ID"
     );
 
     const quantity = validatePositiveInteger(
-        data?.quantity,
+        data.quantity,
         "Quantity"
     );
-
-    if (
-        data?.unitPrice === undefined ||
-        data?.unitPrice === null ||
-        data?.unitPrice === "" ||
-        !Number.isFinite(Number(data.unitPrice)) ||
-        Number(data.unitPrice) < 0
-    ) {
-        throw new Error("Valid Unit Price Is Required");
-    }
-
-    const unitPrice = Number(data.unitPrice);
-
-    if (!Number.isFinite(unitPrice) || unitPrice > 99999999.99) {
-        throw new Error("Valid Unit Price Is Required");
-    }
 
     const transaction = await sequelize.transaction();
 
     try {
-        // Lock the order so it cannot be confirmed concurrently
-        // while an item is being added.
+        // Lock the sales order to prevent concurrent item additions
+        // while the order is being confirmed.
         const salesOrder = await model.SalesOrder.findByPk(
             orderId,
             {
@@ -85,12 +77,14 @@ const createSalesOrderItem = async (
             );
         }
 
+        // Verify that the user can access this order's warehouse.
         await userWarehouseService.checkWarehouseAccess(
             userId,
             roleId,
             salesOrder.warehouseId
         );
 
+        // Fetch the product and use its database price.
         const product = await productRepository.getOneProduct(
             productId
         );
@@ -103,12 +97,24 @@ const createSalesOrderItem = async (
             throw new Error("Product Is Inactive");
         }
 
+        const unitPrice = Number(product.price);
+
+        if (
+            !Number.isFinite(unitPrice) ||
+            unitPrice < 0 ||
+            unitPrice > 99999999.99
+        ) {
+            throw new Error("Invalid Product Price");
+        }
+
+        // Save a snapshot of the product price with the order item.
+        // Later product price changes will not change this order item.
         const item = await salesOrderItemRepository.createSalesOrderItem(
             {
                 salesOrderId: orderId,
                 productId,
                 quantity,
-                unitPrice,
+                unitPrice: unitPrice.toFixed(2),
             },
             transaction
         );
@@ -151,9 +157,11 @@ const getSalesOrderItems = async (
         salesOrder.warehouseId
     );
 
-    return await salesOrderItemRepository.getSalesOrderItems(
+    const items = await salesOrderItemRepository.getSalesOrderItems(
         orderId
     );
+
+    return items;
 };
 
 export {
