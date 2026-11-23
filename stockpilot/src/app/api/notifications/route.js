@@ -7,8 +7,8 @@ import { Op } from "sequelize";
 
 export async function GET(request) {
     try {
-        await connectDB();
         const user = await authMiddleware(request);
+        await connectDB();
 
         const roleId = Number(user.roleId);
         const userId = Number(user.id);
@@ -51,10 +51,17 @@ export async function GET(request) {
             },
         });
     } catch (error) {
-        console.error("Notifications GET Error:", error);
-        const isAuth = error.message === "Invalid or Expired Token";
+        const isAuth =
+            error?.message === "Invalid or Expired Token" ||
+            error?.name === "JsonWebTokenError" ||
+            error?.name === "TokenExpiredError";
+
+        if (!isAuth) {
+            console.error("Notifications GET Error:", error?.message || error);
+        }
+
         return Response.json(
-            { success: false, message: error.message || "Failed to load notifications" },
+            { success: false, message: isAuth ? "Invalid or Expired Token" : error?.message || "Failed to load notifications" },
             { status: isAuth ? 401 : 500 }
         );
     }
@@ -62,8 +69,8 @@ export async function GET(request) {
 
 export async function PATCH(request) {
     try {
-        await connectDB();
         const user = await authMiddleware(request);
+        await connectDB();
 
         let body = {};
         try {

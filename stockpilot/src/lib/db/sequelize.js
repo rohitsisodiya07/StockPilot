@@ -1,4 +1,12 @@
 import { Sequelize } from "sequelize";
+import dns from "dns";
+
+// Prefer IPv4 resolution to prevent transient Windows / ISP dual-stack DNS drops
+try {
+    dns.setDefaultResultOrder("ipv4first");
+} catch {
+    // Unsupported in older environments
+}
 
 const isDev = process.env.NODE_ENV !== "production";
 
@@ -16,6 +24,21 @@ const createSequelizeInstance = () => {
             dialect: "mysql",
             logging: false,
             benchmark: false,
+            retry: {
+                max: 3,
+                timeout: 5000,
+                match: [
+                    /SequelizeHostNotFoundError/,
+                    /SequelizeConnectionError/,
+                    /SequelizeConnectionRefusedError/,
+                    /SequelizeConnectionTimedOutError/,
+                    /SequelizeTimeoutError/,
+                    /getaddrinfo ENOTFOUND/,
+                    /EAI_AGAIN/,
+                    /ECONNRESET/,
+                    /ETIMEDOUT/,
+                ],
+            },
             dialectOptions: isRemote
                 ? {
                       ssl: {
