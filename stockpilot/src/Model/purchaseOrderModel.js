@@ -19,7 +19,7 @@ const PurchaseOrder = sequelize.define(
         },
         createdBy: {
             type: DataTypes.INTEGER,
-            allowNull: false,
+            allowNull: true,
         },
         status: {
             type: DataTypes.ENUM(
@@ -39,6 +39,20 @@ const PurchaseOrder = sequelize.define(
     {
         tableName: "purchase_orders",
         timestamps: true,
+        indexes: [
+            {
+                name: "idx_purchase_orders_status_warehouse",
+                fields: ["status", "warehouseId"],
+            },
+            {
+                name: "idx_purchase_orders_supplier_id",
+                fields: ["supplierId"],
+            },
+            {
+                name: "idx_purchase_orders_created_at",
+                fields: ["createdAt"],
+            },
+        ],
     }
 );
 

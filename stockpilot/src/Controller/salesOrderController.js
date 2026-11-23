@@ -1,4 +1,7 @@
 import * as salesOrderService from "@/Service/salesOrderService";
+import { cache } from "@/lib/cache";
+import { logAudit } from "@/lib/audit";
+import { createNotification } from "@/lib/notifier";
 
 // -------------------- Common Helpers --------------------
 
@@ -94,6 +97,26 @@ const createSalesOrder = async (request, user) => {
             }
         );
 
+        try {
+            cache.delPrefix("dashboard:");
+            logAudit({
+                userId: user.id,
+                action: "CREATE",
+                entity: "SALES_ORDER",
+                entityId: data?.id,
+                details: {
+                    message: `Sales Order #SO-${data?.id} created for customer ${body.customerName || "N/A"}`,
+                },
+            });
+            createNotification({
+                roleId: 1,
+                type: "SO_CREATED",
+                title: "New Sales Order Created",
+                message: `Sales Order #SO-${String(data?.id).padStart(4, "0")} has been created.`,
+                link: "/admin/sales-orders",
+            });
+        } catch {}
+
         return Response.json(
             {
                 success: true,
@@ -181,6 +204,10 @@ const updateSalesOrderStatus = async (request, user, id) => {
             body.status.trim().toUpperCase()
         );
 
+        try {
+            cache.delPrefix("dashboard:");
+        } catch {}
+
         return Response.json({
             success: true,
             message: "Sales Order Status Updated Successfully",
@@ -202,6 +229,26 @@ const dispatchSalesOrder = async (user, id) => {
             user.roleId,
             orderId
         );
+
+        try {
+            cache.delPrefix("dashboard:");
+            logAudit({
+                userId: user.id,
+                action: "DISPATCH",
+                entity: "SALES_ORDER",
+                entityId: orderId,
+                details: {
+                    message: `Sales Order #SO-${orderId} dispatched to customer`,
+                },
+            });
+            createNotification({
+                roleId: 1,
+                type: "SO_DISPATCHED",
+                title: "Sales Order Dispatched",
+                message: `Sales Order #SO-${String(orderId).padStart(4, "0")} dispatched. Stock deducted from inventory.`,
+                link: "/admin/sales-orders",
+            });
+        } catch {}
 
         return Response.json({
             success: true,

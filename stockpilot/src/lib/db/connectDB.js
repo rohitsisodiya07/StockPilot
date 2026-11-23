@@ -1,30 +1,35 @@
-import sequelize from "./sequelize"
-import '@/Model'
+import sequelize from "./sequelize";
+import "@/Model";
 
-let isConnected = false;
+let connectionPromise = null;
 
 const connectDB = async () => {
-    if (isConnected) {
+    if (globalThis.dbIsConnected) {
         return sequelize;
     }
 
-    try {
-        await sequelize.authenticate();
+    if (!connectionPromise) {
+        connectionPromise = (async () => {
+            try {
+                await sequelize.authenticate();
 
-        console.log("MySQL Connected Successfully");
+                // Only sync models during initial setup or when explicitly enabled
+                if (process.env.SYNC_DB === "true") {
+                    await sequelize.sync();
+                    console.log("All Models Synced Successfully");
+                }
 
-        await sequelize.sync();
-
-        console.log("All Models Synced Successfully");
-
-        isConnected = true;
-
-        return sequelize;
-    } catch (error) {
-        console.error("Database Connection Failed:", error.message);
-
-        throw error;
+                globalThis.dbIsConnected = true;
+                return sequelize;
+            } catch (error) {
+                connectionPromise = null;
+                console.error("Database Connection Failed:", error.message);
+                throw error;
+            }
+        })();
     }
+
+    return await connectionPromise;
 };
 
 export default connectDB;

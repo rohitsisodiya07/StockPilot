@@ -56,6 +56,18 @@ const Inventory = sequelize.define(
                 unique: true,
                 fields: ["productId", "warehouseId"],
             },
+            {
+                name: "idx_inventory_warehouse_id",
+                fields: ["warehouseId"],
+            },
+            {
+                name: "idx_inventory_product_id",
+                fields: ["productId"],
+            },
+            {
+                name: "idx_inventory_warehouse_qty",
+                fields: ["warehouseId", "quantity"],
+            },
         ],
     }
 );

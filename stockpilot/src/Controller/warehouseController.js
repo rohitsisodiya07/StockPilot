@@ -66,9 +66,12 @@ const createWarehouse = async (request) => {
 };
 
 // Get All Warehouses
-const getAllWarehouses = async () => {
+const getAllWarehouses = async (user) => {
     try {
-        const warehouses = await warehouseService.getAllWarehouses();
+        const warehouses = await warehouseService.getAllWarehouses(
+            user.id,
+            user.roleId
+        );
 
         return Response.json(
             {
@@ -78,7 +81,6 @@ const getAllWarehouses = async () => {
             },
             { status: 200 }
         );
-
     } catch (error) {
         console.error("Get All Warehouses Error:", error);
 
@@ -87,7 +89,7 @@ const getAllWarehouses = async () => {
                 success: false,
                 message: error.message,
             },
-            { status: 500 }
+            { status: 403 }
         );
     }
 };

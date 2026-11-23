@@ -42,7 +42,7 @@ export async function GET(request, { params }) {
 
         const { warehouseId } = await params;
 
-        return await getWarehouseInventory(user, warehouseId);
+        return await getWarehouseInventory(user, warehouseId, request);
     } catch (error) {
         return handleError(error);
     }

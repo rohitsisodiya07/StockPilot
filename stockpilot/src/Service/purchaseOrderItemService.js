@@ -50,6 +50,13 @@ const createPurchaseOrderItem = async (
     purchaseOrderId,
     data
 ) => {
+    // Only Admin (1) and Inventory Manager (4) can add items
+    const normalizedRoleId = Number(roleId);
+
+    if (![1, 4].includes(normalizedRoleId)) {
+        throw new Error("Access Denied");
+    }
+
     validatePositiveId(purchaseOrderId, "Purchase Order ID");
 
     const { productId, quantity, unitPrice } = data;
@@ -66,15 +73,14 @@ const createPurchaseOrderItem = async (
         throw new Error("Purchase Order Not Found");
     }
 
-    // Items can only be added to draft orders
     if (purchaseOrder.status !== "DRAFT") {
         throw new Error("Items Can Only Be Added To Draft Orders");
     }
 
-    // Verify user can access this warehouse
+    // Verify warehouse access
     await userWarehouseService.checkWarehouseAccess(
         userId,
-        roleId,
+        normalizedRoleId,
         purchaseOrder.warehouseId
     );
 
@@ -85,7 +91,6 @@ const createPurchaseOrderItem = async (
         throw new Error("Product Not Found");
     }
 
-    // Create item
     return purchaseOrderItemRepository.createPurchaseOrderItem({
         purchaseOrderId,
         productId,
@@ -101,37 +106,16 @@ const getPurchaseOrderItems = async (
     purchaseOrderId,
     options = {}
 ) => {
+    const normalizedRoleId = Number(roleId);
+
+    // Admin, Inventory Manager and Warehouse Staff can view items
+    if (![1, 4, 5].includes(normalizedRoleId)) {
+        throw new Error("Access Denied");
+    }
+
     validatePositiveId(purchaseOrderId, "Purchase Order ID");
 
-    const {
-        search = "",
-        sortBy = "id",
-        sortOrder = "ASC",
-        limit = 10,
-        offset = 0,
-    } = options;
-
-    if (typeof search !== "string" || search.length > 100) {
-        throw new Error("Invalid Search Value");
-    }
-
-    if (!ALLOWED_SORT_FIELDS.includes(sortBy)) {
-        throw new Error("Invalid Purchase Order Item Sort Field");
-    }
-
-    if (!ALLOWED_SORT_ORDERS.includes(sortOrder)) {
-        throw new Error("Invalid Purchase Order Item Sort Order");
-    }
-
-    if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100) {
-        throw new Error("Limit Must Be Between 1 and 100");
-    }
-
-    if (!Number.isSafeInteger(offset) || offset < 0) {
-        throw new Error("Invalid Offset");
-    }
-
-    // Check order exists
+    // Validate purchase order
     const purchaseOrder =
         await purchaseOrderRepository.getOnePurchaseOrder(
             purchaseOrderId
@@ -141,23 +125,48 @@ const getPurchaseOrderItems = async (
         throw new Error("Purchase Order Not Found");
     }
 
-    // Check warehouse access before returning items
+    // Verify warehouse access
     await userWarehouseService.checkWarehouseAccess(
         userId,
-        roleId,
+        normalizedRoleId,
         purchaseOrder.warehouseId
     );
 
-    // Repository must return { rows, count }
+    const {
+        search = "",
+        sortBy = "id",
+        sortOrder = "ASC",
+        limit = 10,
+        offset = 0,
+    } = options;
+
+    // Validate sorting
+    if (!ALLOWED_SORT_FIELDS.includes(sortBy)) {
+        throw new Error("Invalid Sort Field");
+    }
+
+    if (!ALLOWED_SORT_ORDERS.includes(sortOrder)) {
+        throw new Error("Invalid Sort Order");
+    }
+
+    // Validate pagination
+    if (!Number.isSafeInteger(Number(limit)) || Number(limit) < 1 || Number(limit) > 100) {
+        throw new Error("Invalid Limit");
+    }
+
+    if (!Number.isSafeInteger(Number(offset)) || Number(offset) < 0) {
+        throw new Error("Invalid Offset");
+    }
+
     const result =
         await purchaseOrderItemRepository.getPurchaseOrderItems(
             purchaseOrderId,
             {
-                search: search.trim(),
+                search,
                 sortBy,
                 sortOrder,
-                limit,
-                offset,
+                limit: Number(limit),
+                offset: Number(offset),
             }
         );
 
@@ -166,7 +175,6 @@ const getPurchaseOrderItems = async (
         total: result.count,
     };
 };
-
 
 const deletePurchaseOrderItem = async (
     userId,

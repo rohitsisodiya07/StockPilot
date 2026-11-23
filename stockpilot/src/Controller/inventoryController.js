@@ -3,7 +3,29 @@ import * as inventoryService from "@/Service/inventoryService";
 
 const createInventory = async (request, user) => {
     try {
-        const body = await request.json();
+        let body;
+
+        try {
+            body = await request.json();
+        } catch {
+            return Response.json(
+                {
+                    success: false,
+                    message: "Invalid JSON Body",
+                },
+                { status: 400 }
+            );
+        }
+
+        if (!body || typeof body !== "object" || Array.isArray(body)) {
+            return Response.json(
+                {
+                    success: false,
+                    message: "Invalid Request Body",
+                },
+                { status: 400 }
+            );
+        }
 
         const { productId, warehouseId, quantity, reorderLevel } = body;
 
@@ -24,19 +46,37 @@ const createInventory = async (request, user) => {
         const parsedProductId = Number(productId);
         const parsedWarehouseId = Number(warehouseId);
         const parsedQuantity = Number(quantity);
+
         const parsedReorderLevel =
             reorderLevel === undefined ? 10 : Number(reorderLevel);
 
         if (
             !Number.isInteger(parsedProductId) || parsedProductId <= 0 ||
             !Number.isInteger(parsedWarehouseId) || parsedWarehouseId <= 0 ||
-            !Number.isInteger(parsedQuantity) || parsedQuantity < 0 ||
-            !Number.isInteger(parsedReorderLevel) || parsedReorderLevel < 0
+            !Number.isInteger(parsedQuantity) || parsedQuantity < 0
         ) {
             return Response.json(
                 {
                     success: false,
                     message: "Invalid inventory values",
+                },
+                { status: 400 }
+            );
+        }
+
+        if (
+            reorderLevel !== undefined &&
+            (
+                reorderLevel === null ||
+                reorderLevel === "" ||
+                !Number.isInteger(parsedReorderLevel) ||
+                parsedReorderLevel < 0
+            )
+        ) {
+            return Response.json(
+                {
+                    success: false,
+                    message: "Invalid Reorder Level",
                 },
                 { status: 400 }
             );
@@ -61,17 +101,25 @@ const createInventory = async (request, user) => {
             },
             { status: 201 }
         );
+
     } catch (error) {
         console.error("Create Inventory Error:", error);
 
+        const message = error?.message || "";
+
         const status =
-            error.message.includes("Access Denied") ? 403 :
-                error.message.includes("Not Found") ? 404 : 400;
+            message.includes("Access Denied") ? 403 :
+                message.includes("Not Found") ? 404 :
+                    message.includes("Already Exists") ? 409 :
+                        message.includes("Invalid") ||
+                            message.includes("Required") ? 400 : 500;
 
         return Response.json(
             {
                 success: false,
-                message: error.message,
+                message: status === 500
+                    ? "Internal Server Error"
+                    : message,
             },
             { status }
         );
@@ -157,7 +205,7 @@ const getInventoryById = async (user, id) => {
 };
 
 
-const getWarehouseInventory = async (user, warehouseId) => {
+const getWarehouseInventory = async (user, warehouseId, request = undefined) => {
     try {
         const parsedWarehouseId = Number(warehouseId);
 
@@ -174,17 +222,48 @@ const getWarehouseInventory = async (user, warehouseId) => {
             );
         }
 
+        let options = {};
+        if (request && request.url) {
+            try {
+                const { searchParams } = new URL(request.url);
+                const limitParam = searchParams.get("limit");
+                const pageParam = searchParams.get("page");
+                const searchParam = searchParams.get("search");
+
+                if (limitParam) {
+                    const parsedLimit = Math.min(Math.max(Number(limitParam) || 50, 1), 200);
+                    const parsedPage = Math.max(Number(pageParam) || 1, 1);
+                    options.limit = parsedLimit;
+                    options.offset = (parsedPage - 1) * parsedLimit;
+                }
+                if (searchParam && searchParam.trim()) {
+                    options.search = searchParam.trim();
+                }
+            } catch {}
+        }
+
         const inventory = await inventoryService.getWarehouseInventory(
             user.id,
             user.roleId,
-            parsedWarehouseId
+            parsedWarehouseId,
+            options
         );
+
+        const isPaginated = inventory && typeof inventory.count === "number" && Array.isArray(inventory.rows);
 
         return Response.json(
             {
                 success: true,
                 message: "Warehouse Inventory Fetched Successfully",
-                data: inventory,
+                data: isPaginated ? inventory.rows : inventory,
+                ...(isPaginated ? {
+                    pagination: {
+                        total: inventory.count,
+                        page: Math.floor((options.offset || 0) / options.limit) + 1,
+                        limit: options.limit,
+                        totalPages: Math.ceil(inventory.count / options.limit),
+                    }
+                } : {}),
             },
             { status: 200 }
         );

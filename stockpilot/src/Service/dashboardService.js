@@ -155,6 +155,7 @@ const getDashboardAnalytics = async (
         warehouseUsers,
         orderSummary,
         lowStockItems,
+        totalStockValuation,
     ] = await Promise.all([
         dashboardRepository.getTotalProducts(
             effectiveWarehouseIds
@@ -213,7 +214,35 @@ const getDashboardAnalytics = async (
         dashboardRepository.getLowStockItems(
             effectiveWarehouseIds
         ),
+
+        dashboardRepository.getTotalStockValuation(
+            effectiveWarehouseIds
+        ),
     ]);
+
+    // Calculate depletion forecasting for low stock items
+    const totalOut = chartMovements
+        .filter((m) => m.type === "OUT")
+        .reduce((s, m) => s + Number(m.quantity || 0), 0);
+    const avgDailyOut = Math.max(0.5, Number((totalOut / 30).toFixed(1)));
+
+    const enhancedLowStockItems = lowStockItems.map((item) => {
+        const itemObj = item.toJSON ? item.toJSON() : item;
+        const currentQty = Number(itemObj.quantity || 0);
+        const reorderLevel = Number(itemObj.reorderLevel || 10);
+
+        const daysRemaining = currentQty <= 0 ? 0 : Math.max(1, Math.round(currentQty / avgDailyOut));
+        const urgency = daysRemaining <= 3 ? "CRITICAL" : daysRemaining <= 7 ? "WARNING" : "MODERATE";
+        const suggestedReorderQuantity = Math.max(Math.ceil((reorderLevel * 2.5) - currentQty), 10);
+
+        return {
+            ...itemObj,
+            depletionRate: avgDailyOut,
+            daysRemaining,
+            urgency,
+            suggestedReorderQuantity,
+        };
+    });
 
     // Group chart movements by date.
     const chartMap = new Map();
@@ -287,6 +316,7 @@ const getDashboardAnalytics = async (
             totalWarehouses,
             totalInventoryUnits,
             lowStockCount,
+            totalStockValuation: Number(totalStockValuation || 0),
         },
 
         options: {
@@ -314,7 +344,7 @@ const getDashboardAnalytics = async (
         orders: orderSummary,
 
         alerts: {
-            lowStockItems,
+            lowStockItems: enhancedLowStockItems,
         },
     };
 };

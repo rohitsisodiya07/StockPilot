@@ -11,6 +11,12 @@ import PurchaseOrderItem from "./purchaseOrderItemModel";
 import SalesOrder from "./salesOrderModel";
 import SalesOrderItem from "./salesOrderItemModel";
 import Category from "./categoryModel";
+import Notification from "./notificationModel";
+import AuditLog from "./auditLogModel";
+import StaffTask from "./staffTaskModel";
+import StaffShift from "./staffShiftModel";
+import StockTransferRequest from "./stockTransferRequestModel";
+import ReturnInspection from "./returnInspectionModel";
 
 //Role->User
 Role.hasMany(User, { foreignKey: "roleId", as: "users", });
@@ -111,7 +117,35 @@ Category.hasMany(Product, { foreignKey: "categoryId", as: "products", });
 // Each product belongs to one category.
 Product.belongsTo(Category, { foreignKey: "categoryId", as: "category", });
 
+// Notifications
+User.hasMany(Notification, { foreignKey: "userId", as: "notifications" });
+Notification.belongsTo(User, { foreignKey: "userId", as: "user" });
 
+// Audit Logs
+User.hasMany(AuditLog, { foreignKey: "userId", as: "auditLogs" });
+AuditLog.belongsTo(User, { foreignKey: "userId", as: "user" });
+
+// Staff Tasks
+User.hasMany(StaffTask, { foreignKey: "assignedTo", as: "assignedTasks" });
+StaffTask.belongsTo(User, { foreignKey: "assignedTo", as: "assignee" });
+StaffTask.belongsTo(User, { foreignKey: "createdBy", as: "creator" });
+StaffTask.belongsTo(Warehouse, { foreignKey: "warehouseId", as: "warehouse" });
+
+// Staff Shifts
+User.hasMany(StaffShift, { foreignKey: "userId", as: "shifts" });
+StaffShift.belongsTo(User, { foreignKey: "userId", as: "user" });
+StaffShift.belongsTo(Warehouse, { foreignKey: "warehouseId", as: "warehouse" });
+
+// Stock Transfer Requests
+StockTransferRequest.belongsTo(Product, { foreignKey: "productId", as: "product" });
+StockTransferRequest.belongsTo(Warehouse, { foreignKey: "fromWarehouseId", as: "fromWarehouse" });
+StockTransferRequest.belongsTo(Warehouse, { foreignKey: "toWarehouseId", as: "toWarehouse" });
+StockTransferRequest.belongsTo(User, { foreignKey: "requestedBy", as: "requester" });
+
+// Return Inspections
+ReturnInspection.belongsTo(Product, { foreignKey: "productId", as: "product" });
+ReturnInspection.belongsTo(Warehouse, { foreignKey: "warehouseId", as: "warehouse" });
+ReturnInspection.belongsTo(User, { foreignKey: "inspectedBy", as: "inspector" });
 
 export {
     Role,
@@ -126,5 +160,11 @@ export {
     PurchaseOrderItem,
     SalesOrder,
     SalesOrderItem,
-    Category
+    Category,
+    Notification,
+    AuditLog,
+    StaffTask,
+    StaffShift,
+    StockTransferRequest,
+    ReturnInspection,
 };

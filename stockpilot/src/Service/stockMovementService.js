@@ -3,6 +3,9 @@ import * as model from "@/Model/index";
 import * as stockMovementRepository from "@/Repository/stockMovementRepository";
 import * as inventoryRepository from "@/Repository/inventoryRepository";
 import * as userWarehouseService from "@/Service/userWarehouseService";
+import cache from "@/lib/cache";
+import { logAudit } from "@/lib/audit";
+import { createNotification } from "@/lib/notifier";
 
 // -------------------- Helpers --------------------
 
@@ -135,6 +138,26 @@ const createStockMovement = async (
             transaction
         );
     });
+
+    try {
+        cache.delPrefix("dashboard:");
+        logAudit({
+            userId,
+            action: movementType === "IN" ? "RECEIVE" : "DISPATCH",
+            entity: "STOCK_MOVEMENT",
+            entityId: movement?.id,
+            details: {
+                type: movementType,
+                quantity: parsedQuantity,
+                inventoryId: parsedInventoryId,
+                note: movementNote,
+            },
+        });
+    } catch (e) {
+        // Safe fallback
+    }
+
+    return movement;
 };
 
 // -------------------- Get Inventory Movements --------------------

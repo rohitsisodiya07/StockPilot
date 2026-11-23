@@ -61,6 +61,35 @@ const getTotalInventoryUnits = async (warehouseIds = null) => {
     return (await model.Inventory.sum("quantity", { where })) || 0;
 };
 
+const getTotalStockValuation = async (warehouseIds = null) => {
+    try {
+        const whereClause = [];
+        const replacements = {};
+        if (warehouseIds !== null) {
+            if (!warehouseIds.length) return 0;
+            whereClause.push("i.warehouseId IN (:warehouseIds)");
+            replacements.warehouseIds = warehouseIds;
+        }
+
+        const whereSql = whereClause.length ? `WHERE ${whereClause.join(" AND ")}` : "";
+        const [result] = await model.Inventory.sequelize.query(
+            `SELECT COALESCE(SUM(i.quantity * p.price), 0) AS totalValuation 
+             FROM inventory i 
+             INNER JOIN products p ON i.productId = p.id 
+             ${whereSql}`,
+            {
+                replacements,
+                type: model.Inventory.sequelize.QueryTypes.SELECT,
+            }
+        );
+
+        return Number(result?.totalValuation || 0);
+    } catch (err) {
+        console.error("getTotalStockValuation error:", err);
+        return 0;
+    }
+};
+
 const getLowStockCount = async (warehouseIds = null) => {
     const where = {
         quantity: { [Op.lte]: col("reorderLevel") },
@@ -323,31 +352,25 @@ const getOrderSummary = async (warehouseIds = null) => {
         salesWhere.warehouseId = { [Op.in]: warehouseIds };
     }
 
-    const [
-        purchaseTotal,
-        purchaseDraft,
-        purchaseOrdered,
-        purchaseReceived,
-        purchaseCancelled,
-        purchaseOverdue,
-        salesTotal,
-        salesDraft,
-        salesConfirmed,
-        salesDispatched,
-        salesCancelled,
-    ] = await Promise.all([
-        model.PurchaseOrder.count({ where: purchaseWhere }),
-        model.PurchaseOrder.count({
-            where: { ...purchaseWhere, status: "DRAFT" },
+    // Run 2 fast GROUP BY queries + 1 overdue check instead of 11 full table counts!
+    const [poGroup, soGroup, purchaseOverdue] = await Promise.all([
+        model.PurchaseOrder.findAll({
+            where: purchaseWhere,
+            attributes: [
+                "status",
+                [model.PurchaseOrder.sequelize.fn("COUNT", model.PurchaseOrder.sequelize.col("id")), "count"],
+            ],
+            group: ["status"],
+            raw: true,
         }),
-        model.PurchaseOrder.count({
-            where: { ...purchaseWhere, status: "ORDERED" },
-        }),
-        model.PurchaseOrder.count({
-            where: { ...purchaseWhere, status: "RECEIVED" },
-        }),
-        model.PurchaseOrder.count({
-            where: { ...purchaseWhere, status: "CANCELLED" },
+        model.SalesOrder.findAll({
+            where: salesWhere,
+            attributes: [
+                "status",
+                [model.SalesOrder.sequelize.fn("COUNT", model.SalesOrder.sequelize.col("id")), "count"],
+            ],
+            group: ["status"],
+            raw: true,
         }),
         model.PurchaseOrder.count({
             where: {
@@ -358,20 +381,33 @@ const getOrderSummary = async (warehouseIds = null) => {
                 },
             },
         }),
-        model.SalesOrder.count({ where: salesWhere }),
-        model.SalesOrder.count({
-            where: { ...salesWhere, status: "DRAFT" },
-        }),
-        model.SalesOrder.count({
-            where: { ...salesWhere, status: "CONFIRMED" },
-        }),
-        model.SalesOrder.count({
-            where: { ...salesWhere, status: "DISPATCHED" },
-        }),
-        model.SalesOrder.count({
-            where: { ...salesWhere, status: "CANCELLED" },
-        }),
     ]);
+
+    const poCounts = {};
+    let purchaseTotal = 0;
+    poGroup.forEach((r) => {
+        const cnt = Number(r.count || 0);
+        poCounts[r.status] = cnt;
+        purchaseTotal += cnt;
+    });
+
+    const soCounts = {};
+    let salesTotal = 0;
+    soGroup.forEach((r) => {
+        const cnt = Number(r.count || 0);
+        soCounts[r.status] = cnt;
+        salesTotal += cnt;
+    });
+
+    const purchaseDraft = poCounts["DRAFT"] || 0;
+    const purchaseOrdered = poCounts["ORDERED"] || 0;
+    const purchaseReceived = poCounts["RECEIVED"] || 0;
+    const purchaseCancelled = poCounts["CANCELLED"] || 0;
+
+    const salesDraft = soCounts["DRAFT"] || 0;
+    const salesConfirmed = soCounts["CONFIRMED"] || 0;
+    const salesDispatched = soCounts["DISPATCHED"] || 0;
+    const salesCancelled = soCounts["CANCELLED"] || 0;
 
     return {
         purchaseOrders: {
@@ -505,4 +541,5 @@ export {
     getOrderSummary,
     getLowStockItems,
     getWarehouseUsers,
+    getTotalStockValuation,
 };

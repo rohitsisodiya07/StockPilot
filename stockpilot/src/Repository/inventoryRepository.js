@@ -19,9 +19,35 @@ const createInventory = async (data, transaction = undefined) => {
     });
 };
 
-// Retrieves all inventory records for a warehouse.
-const getWarehouseInventory = async (warehouseId, transaction = undefined) => {
-    return await model.Inventory.findAll({
+// Retrieves all inventory records for a warehouse with optional pagination & search.
+const getWarehouseInventory = async (warehouseId, options = {}, transaction = undefined) => {
+    let actualOptions = options;
+    let actualTransaction = transaction;
+
+    // Handle if options was passed as transaction
+    if (options && (options.commit || options.rollback || options.LOCK)) {
+        actualTransaction = options;
+        actualOptions = {};
+    }
+
+    const { limit, offset, search } = actualOptions || {};
+
+    const productInclude = {
+        model: model.Product,
+        as: "product",
+        attributes: ["id", "name", "sku", "price"],
+    };
+
+    if (search && typeof search === "string" && search.trim()) {
+        productInclude.where = {
+            [Op.or]: [
+                { name: { [Op.like]: `%${search.trim()}%` } },
+                { sku: { [Op.like]: `%${search.trim()}%` } },
+            ],
+        };
+    }
+
+    const query = {
         where: {
             warehouseId,
         },
@@ -32,17 +58,20 @@ const getWarehouseInventory = async (warehouseId, transaction = undefined) => {
             "quantity",
             "reorderLevel",
         ],
-        include: [
-            {
-                model: model.Product,
-                as: "product",
-                attributes: {
-                    exclude: ["createdAt", "updatedAt"],
-                },
-            },
-        ],
-        ...(transaction ? { transaction } : {}),
-    });
+        include: [productInclude],
+        order: [["id", "DESC"]],
+        ...(actualTransaction ? { transaction: actualTransaction } : {}),
+    };
+
+    if (limit && Number(limit) > 0) {
+        query.limit = Number(limit);
+        if (offset && Number(offset) >= 0) {
+            query.offset = Number(offset);
+        }
+        return await model.Inventory.findAndCountAll(query);
+    }
+
+    return await model.Inventory.findAll(query);
 };
 
 //Get All
@@ -157,6 +186,39 @@ const getLowStockInventory = async (warehouseId, transaction = undefined) => {
     });
 };
 
+const getInventoryByWarehouseIds = async (warehouseIds) => {
+    return await model.Inventory.findAll({
+        where: {
+            warehouseId: {
+                [Op.in]: warehouseIds,
+            },
+        },
+        attributes: [
+            "id",
+            "productId",
+            "warehouseId",
+            "quantity",
+            "reorderLevel",
+        ],
+        include: [
+            {
+                model: model.Product,
+                as: "product",
+                attributes: {
+                    exclude: ["createdAt", "updatedAt"],
+                },
+            },
+            {
+                model: model.Warehouse,
+                as: "warehouse",
+                attributes: {
+                    exclude: ["createdAt", "updatedAt"],
+                },
+            },
+        ],
+    });
+};
+
 export {
     findInventory,
     createInventory,
@@ -166,4 +228,5 @@ export {
     updateInventory,
     deleteInventory,
     getLowStockInventory,
+    getInventoryByWarehouseIds
 };

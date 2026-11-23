@@ -18,6 +18,7 @@ export async function GET(request) {
             activityRoleId: searchParams.get("activityRoleId"),
             startDate: searchParams.get("startDate"),
             endDate: searchParams.get("endDate"),
+            refresh: searchParams.get("refresh"),
 
             // Pagination for stock movement history
             page: searchParams.get("page") ?? "1",

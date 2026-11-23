@@ -1,24 +1,36 @@
+
 import * as model from "@/Model/index";
 
 // Check whether a user is assigned to a warehouse
-const findAssignment = async (userId, warehouseId) => {
+const findAssignment = async (
+    userId,
+    warehouseId,
+    transaction = undefined
+) => {
     return await model.UserWarehouse.findOne({
         where: {
             userId,
             warehouseId,
         },
+        ...(transaction ? { transaction } : {}),
     });
 };
 
 // Assign a user to a warehouse
-const createAssignment = async (data, transaction = undefined) => {
+const createAssignment = async (
+    data,
+    transaction = undefined
+) => {
     return await model.UserWarehouse.create(data, {
         ...(transaction ? { transaction } : {}),
     });
 };
 
 // Get all warehouses assigned to a user
-const getUserWarehouses = async (userId) => {
+const getUserWarehouses = async (
+    userId,
+    transaction = undefined
+) => {
     return await model.UserWarehouse.findAll({
         where: {
             userId,
@@ -38,11 +50,15 @@ const getUserWarehouses = async (userId) => {
             },
         ],
         order: [["warehouseId", "ASC"]],
+        ...(transaction ? { transaction } : {}),
     });
 };
 
 // Get users assigned to a warehouse
-const getWarehouseUsers = async (warehouseId) => {
+const getWarehouseUsers = async (
+    warehouseId,
+    transaction = undefined
+) => {
     return await model.UserWarehouse.findAll({
         where: {
             warehouseId,
@@ -56,6 +72,7 @@ const getWarehouseUsers = async (warehouseId) => {
             },
         ],
         order: [["userId", "ASC"]],
+        ...(transaction ? { transaction } : {}),
     });
 };
 

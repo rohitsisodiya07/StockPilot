@@ -1,5 +1,8 @@
 
 import * as purchaseOrderService from "@/Service/purchaseOrderService";
+import cache from "@/lib/cache";
+import { logAudit } from "@/lib/audit";
+import { createNotification } from "@/lib/notifier";
 
 const sendErrorResponse = (error) => {
     const message = error?.message || "Internal Server Error";
@@ -440,6 +443,26 @@ const receivePurchaseOrder = async (user, id) => {
                 roleId,
                 purchaseOrderId
             );
+
+        try {
+            cache.delPrefix("dashboard:");
+            logAudit({
+                userId,
+                action: "RECEIVE",
+                entity: "PURCHASE_ORDER",
+                entityId: purchaseOrderId,
+                details: {
+                    message: `Purchase Order #PO-${purchaseOrderId} received and stock restocked`,
+                },
+            });
+            createNotification({
+                roleId: 1,
+                type: "PO_RECEIVED",
+                title: "Purchase Order Received",
+                message: `PO #PO-${String(purchaseOrderId).padStart(4, "0")} marked as RECEIVED. Stock added to inventory.`,
+                link: "/admin/purchase-orders",
+            });
+        } catch {}
 
         return Response.json(
             {

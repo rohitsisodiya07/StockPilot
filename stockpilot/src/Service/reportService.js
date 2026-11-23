@@ -39,11 +39,17 @@ const getWarehouseFilter = async (
     roleId,
     warehouseId = null
 ) => {
-    // Admin can access all warehouses.
-    // Other users can access only their assigned warehouses.
+    const role = Number(roleId);
+
+    // Only Admin and Inventory Manager can access reports.
+    if (![1, 4].includes(role)) {
+        throw new Error("Access Denied: Report Access");
+    }
+
     let warehouseIds = null;
 
-    if (Number(roleId) !== 1) {
+    // Admin can access all warehouses.
+    if (role !== 1) {
         const warehouses =
             await userWarehouseService.getUserWarehouses(userId);
 
@@ -51,7 +57,6 @@ const getWarehouseFilter = async (
             (item) => Number(item.warehouseId)
         );
 
-        // Explicitly return no results for users with no assignments.
         if (warehouseIds.length === 0) {
             if (warehouseId !== null) {
                 const requestedId = Number(warehouseId);
@@ -96,11 +101,13 @@ const getWarehouseFilter = async (
             throw new Error("Warehouse Not Found");
         }
 
-        await userWarehouseService.checkWarehouseAccess(
-            userId,
-            roleId,
-            requestedId
-        );
+        if (role === 4) {
+            await userWarehouseService.checkWarehouseAccess(
+                userId,
+                role,
+                requestedId
+            );
+        }
 
         warehouseIds = [requestedId];
     }
@@ -272,34 +279,27 @@ const getInventoryReport = async (
     const inventoryRecords =
         await reportRepository.getInventoryReport(warehouseIds);
 
-    const report = inventoryRecords
-        .filter((item) => {
-            if (lowStockOnly === true || lowStockOnly === "true") {
-                return (
-                    Number(item.quantity) <=
-                    Number(item.reorderLevel)
-                );
-            }
+    const allData = inventoryRecords.map((item) => ({
+        inventoryId: item.id,
+        warehouseId: item.warehouseId,
+        warehouseName: item.warehouse?.name ?? null,
+        location: item.warehouse?.location ?? null,
+        productId: item.productId,
+        productName: item.product?.name ?? null,
+        sku: item.product?.sku ?? null,
+        quantity: Number(item.quantity),
+        reorderLevel: Number(item.reorderLevel),
+        lowStock:
+            Number(item.quantity) <= Number(item.reorderLevel),
+    }));
 
-            return true;
-        })
-        .map((item) => ({
-            inventoryId: item.id,
-            warehouseId: item.warehouseId,
-            warehouseName: item.warehouse?.name ?? null,
-            location: item.warehouse?.location ?? null,
-            productId: item.productId,
-            productName: item.product?.name ?? null,
-            sku: item.product?.sku ?? null,
-            quantity: Number(item.quantity),
-            reorderLevel: Number(item.reorderLevel),
-            lowStock:
-                Number(item.quantity) <= Number(item.reorderLevel),
-        }));
+    const report = lowStockOnly
+        ? allData.filter((item) => item.lowStock)
+        : allData;
 
     return {
-        totalItems: report.length,
-        lowStockItems: report.filter((item) => item.lowStock).length,
+        totalItems: allData.length,
+        lowStockItems: allData.filter((item) => item.lowStock).length,
         data: report,
     };
 };

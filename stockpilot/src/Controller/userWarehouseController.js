@@ -1,8 +1,9 @@
 import * as userWarehouseService from "@/Service/userWarehouseService";
 
+// Assign Warehouse - Admin Only
 const assignWarehouse = async (request, user) => {
     try {
-        if (user.roleId !== 1) {
+        if (Number(user.roleId) !== 1) {
             return Response.json(
                 {
                     success: false,
@@ -13,24 +14,13 @@ const assignWarehouse = async (request, user) => {
         }
 
         const body = await request.json();
-
         const { userId, warehouseId } = body;
 
-        if (!userId) {
+        if (!userId || !warehouseId) {
             return Response.json(
                 {
                     success: false,
-                    message: "User ID is Required",
-                },
-                { status: 400 }
-            );
-        }
-
-        if (!warehouseId) {
-            return Response.json(
-                {
-                    success: false,
-                    message: "Warehouse ID is Required",
+                    message: "User ID and Warehouse ID are Required",
                 },
                 { status: 400 }
             );
@@ -93,10 +83,14 @@ const getUserWarehouses = async (request, userId) => {
 };
 
 // Get Warehouse Users
-const getWarehouseUsers = async (request, warehouseId) => {
+const getWarehouseUsers = async (request, user, warehouseId) => {
     try {
         const users =
-            await userWarehouseService.getWarehouseUsers(warehouseId);
+            await userWarehouseService.getWarehouseUsers(
+                user.id,
+                user.roleId,
+                Number(warehouseId)
+            );
 
         return Response.json(
             {
@@ -110,20 +104,31 @@ const getWarehouseUsers = async (request, warehouseId) => {
     } catch (error) {
         console.error("Get Warehouse Users Error:", error);
 
+        const forbidden =
+            error.message.includes("Access Denied") ||
+            error.message.includes("Forbidden");
+
         return Response.json(
             {
                 success: false,
                 message: error.message,
             },
-            { status: 404 }
+            { status: forbidden ? 403 : 404 }
         );
     }
 };
 
 // Remove User From Warehouse
-const removeAssignment = async (request, userId, warehouseId) => {
+const removeAssignment = async (
+    request,
+    user,
+    userId,
+    warehouseId
+) => {
     try {
         await userWarehouseService.removeAssignment(
+            user.id,
+            user.roleId,
             Number(userId),
             Number(warehouseId)
         );
@@ -139,20 +144,25 @@ const removeAssignment = async (request, userId, warehouseId) => {
     } catch (error) {
         console.error("Remove Assignment Error:", error);
 
+        const forbidden =
+            error.message.includes("Access Denied") ||
+            error.message.includes("Forbidden") ||
+            error.message.includes("Only Admin");
+
         return Response.json(
             {
                 success: false,
                 message: error.message,
             },
-            { status: 404 }
+            { status: forbidden ? 403 : 400 }
         );
     }
 };
 
-
+// Assign Staff By Inventory Manager
 const assignStaff = async (request, user) => {
     try {
-        if (user.roleId !== 4) {
+        if (Number(user.roleId) !== 4) {
             return Response.json(
                 {
                     success: false,
@@ -163,34 +173,24 @@ const assignStaff = async (request, user) => {
         }
 
         const body = await request.json();
-
         const { staffId, warehouseId } = body;
 
-        if (!staffId) {
+        if (!staffId || !warehouseId) {
             return Response.json(
                 {
                     success: false,
-                    message: "Staff ID is Required",
+                    message: "Staff ID and Warehouse ID are Required",
                 },
                 { status: 400 }
             );
         }
 
-        if (!warehouseId) {
-            return Response.json(
-                {
-                    success: false,
-                    message: "Warehouse ID is Required",
-                },
-                { status: 400 }
+        const assignment =
+            await userWarehouseService.assignStaff(
+                user.id,
+                Number(staffId),
+                Number(warehouseId)
             );
-        }
-
-        const assignment = await userWarehouseService.assignStaff(
-            user.id,
-            Number(staffId),
-            Number(warehouseId)
-        );
 
         return Response.json(
             {
@@ -204,16 +204,20 @@ const assignStaff = async (request, user) => {
     } catch (error) {
         console.error("Assign Staff Error:", error);
 
+        const forbidden =
+            error.message.includes("Manager Is Not Assigned");
+
         return Response.json(
             {
                 success: false,
                 message: error.message,
             },
-            { status: 400 }
+            { status: forbidden ? 403 : 400 }
         );
     }
 };
 
+// Check Warehouse Access
 const checkWarehouseAccess = async (request, user, warehouseId) => {
     try {
         await userWarehouseService.checkWarehouseAccess(
@@ -222,10 +226,13 @@ const checkWarehouseAccess = async (request, user, warehouseId) => {
             Number(warehouseId)
         );
 
-        return Response.json({
-            success: true,
-            message: "Warehouse Access Granted",
-        });
+        return Response.json(
+            {
+                success: true,
+                message: "Warehouse Access Granted",
+            },
+            { status: 200 }
+        );
 
     } catch (error) {
         return Response.json(
@@ -244,5 +251,5 @@ export {
     getWarehouseUsers,
     removeAssignment,
     assignStaff,
-    checkWarehouseAccess
+    checkWarehouseAccess,
 };

@@ -8,11 +8,14 @@ export async function GET(request, { params }) {
     try {
         await connectDB();
 
-        await authMiddleware(request);
-
+        const user = await authMiddleware(request);
         const { warehouseId } = await params;
 
-        return getWarehouseUsers(request, warehouseId);
+        return await getWarehouseUsers(
+            request,
+            user,
+            warehouseId
+        );
 
     } catch (error) {
         return Response.json(

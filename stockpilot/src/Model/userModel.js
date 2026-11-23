@@ -41,6 +41,22 @@ const User = sequelize.define(
                 min: 1,
             },
         },
+
+        status: {
+            type: DataTypes.ENUM("ACTIVE", "INACTIVE", "PENDING", "REJECTED", "SUSPENDED"),
+            allowNull: false,
+            defaultValue: "ACTIVE",
+        },
+
+        resetOtp: {
+            type: DataTypes.STRING(10),
+            allowNull: true,
+        },
+
+        resetOtpExpires: {
+            type: DataTypes.DATE,
+            allowNull: true,
+        },
     },
     {
         tableName: "users",

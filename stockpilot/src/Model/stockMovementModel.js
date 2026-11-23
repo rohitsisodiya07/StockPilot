@@ -43,16 +43,34 @@ const StockMovement = sequelize.define(
 
         userId: {
             type: DataTypes.INTEGER,
-            allowNull: false,
-            validate: {
-                isInt: true,
-                min: 1,
-            },
+            allowNull: true,
         },
     },
     {
         tableName: "stock_movements",
         timestamps: true,
+        indexes: [
+            {
+                name: "idx_stock_movements_inventory_id",
+                fields: ["inventoryId"],
+            },
+            {
+                name: "idx_stock_movements_user_id",
+                fields: ["userId"],
+            },
+            {
+                name: "idx_stock_movements_created_at",
+                fields: ["createdAt"],
+            },
+            {
+                name: "idx_stock_movements_inv_created",
+                fields: ["inventoryId", "createdAt"],
+            },
+            {
+                name: "idx_stock_movements_type_created",
+                fields: ["type", "createdAt"],
+            },
+        ],
     }
 );
 

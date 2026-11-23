@@ -12,8 +12,16 @@ const createWarehouse = async (data) => {
 };
 
 // Get All Warehouses
-const getAllWarehouses = async () => {
-    return await warehouseRepository.getAllWarehouses();
+
+const getAllWarehouses = async (userId, roleId) => {
+    if (!userId || !roleId) {
+        throw new Error("User authentication details are missing");
+    }
+
+    return await warehouseRepository.getAllWarehouses(
+        userId,
+        roleId
+    );
 };
 
 // Get One Warehouse

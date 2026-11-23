@@ -12,15 +12,21 @@ const createStockMovement = async (data, transaction) => {
 
 const getInventoryMovements = async (
     inventoryId,
+    options = {},
     transaction = undefined
 ) => {
-    return await model.StockMovement.findAll({
+    let actualOptions = options;
+    let actualTransaction = transaction;
+
+    if (options && (options.commit || options.rollback || options.LOCK)) {
+        actualTransaction = options;
+        actualOptions = {};
+    }
+
+    const { limit, offset } = actualOptions || {};
+
+    const query = {
         where: { inventoryId },
-
-        attributes: {
-            exclude: ["createdAt", "updatedAt"],
-        },
-
         include: [
             {
                 model: model.User,
@@ -28,11 +34,19 @@ const getInventoryMovements = async (
                 attributes: ["id", "name", "email", "roleId"],
             },
         ],
+        order: [["createdAt", "DESC"], ["id", "DESC"]],
+        ...(actualTransaction ? { transaction: actualTransaction } : {}),
+    };
 
-        order: [["createdAt", "DESC"]],
+    if (limit && Number(limit) > 0) {
+        query.limit = Number(limit);
+        if (offset && Number(offset) >= 0) {
+            query.offset = Number(offset);
+        }
+        return await model.StockMovement.findAndCountAll(query);
+    }
 
-        ...(transaction ? { transaction } : {}),
-    });
+    return await model.StockMovement.findAll(query);
 };
 
 // -------------------- Get One Stock Movement --------------------

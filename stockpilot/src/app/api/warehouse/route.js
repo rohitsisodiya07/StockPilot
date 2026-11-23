@@ -11,7 +11,7 @@ import {
 } from "@/Controller/warehouseController";
 
 const allowWarehouseRead = roleMiddleware(1, 4, 5);
-const allowWarehouseCreate = roleMiddleware(1, 4);
+const allowWarehouseCreate = roleMiddleware(1);
 
 const handleError = (error, action) => {
     console.error(`Warehouse ${action} API Error:`, error);
@@ -20,8 +20,7 @@ const handleError = (error, action) => {
         error?.message === "Invalid or Expired Token";
 
     const isForbidden =
-        error?.message ===
-        "Forbidden: You do not have permission";
+        error?.message === "Forbidden: You do not have permission";
 
     return Response.json(
         {
@@ -38,7 +37,21 @@ const handleError = (error, action) => {
     );
 };
 
-// POST: Create Warehouse
+// GET: Fetch all warehouses
+export async function GET(request) {
+    try {
+        await connectDB();
+
+        const user = await authMiddleware(request);
+        allowWarehouseRead(user);
+
+        return await getAllWarehouses(user);
+    } catch (error) {
+        return handleError(error, "Fetch");
+    }
+}
+
+// POST: Create warehouse
 export async function POST(request) {
     try {
         await connectDB();
@@ -49,19 +62,5 @@ export async function POST(request) {
         return await createWarehouse(request);
     } catch (error) {
         return handleError(error, "Create");
-    }
-}
-
-// GET: Fetch All Warehouses
-export async function GET(request) {
-    try {
-        await connectDB();
-
-        const user = await authMiddleware(request);
-        allowWarehouseRead(user);
-
-        return await getAllWarehouses();
-    } catch (error) {
-        return handleError(error, "Fetch");
     }
 }

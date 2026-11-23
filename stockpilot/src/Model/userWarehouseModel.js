@@ -1,3 +1,4 @@
+
 import { DataTypes } from "sequelize";
 import sequelize from "@/lib/db/sequelize";
 
@@ -33,8 +34,13 @@ const UserWarehouse = sequelize.define(
         timestamps: true,
         indexes: [
             {
+                name: "unique_user_warehouse",
                 unique: true,
                 fields: ["userId", "warehouseId"],
+            },
+            {
+                name: "idx_user_warehouses_warehouse_id",
+                fields: ["warehouseId"],
             },
         ],
     }

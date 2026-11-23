@@ -12,8 +12,34 @@ const createWarehouse = async (data) => {
     return await model.Warehouse.create(data);
 };
 
-const getAllWarehouses = async () => {
-    return await model.Warehouse.findAll();
+// Get All Warehouses
+// Get All Warehouses
+const getAllWarehouses = async (userId, roleId) => {
+    // Admin: all warehouses
+    if (Number(roleId) === 1) {
+        return await model.Warehouse.findAll();
+    }
+
+    // Inventory Manager / Warehouse Staff:
+    // only assigned warehouses
+    if ([4, 5].includes(Number(roleId))) {
+        return await model.Warehouse.findAll({
+            include: [
+                {
+                    model: model.UserWarehouse,
+                    as: "userAssignments",
+                    where: {
+                        userId: userId,
+                    },
+                    attributes: [],
+                    required: true,
+                },
+            ],
+            distinct: true,
+        });
+    }
+
+    throw new Error("You are not authorized to view warehouses");
 };
 
 const getOneWarehouse = async (id) => {

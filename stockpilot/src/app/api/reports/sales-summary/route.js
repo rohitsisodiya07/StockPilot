@@ -1,6 +1,7 @@
 import connectDB from "@/lib/db/connectDB";
 import authMiddleware from "@/Middleware/authMiddleware";
 import { getSalesSummary } from "@/Controller/reportController";
+import handleReportRouteError from "@/Utils/reportRouteError";
 
 export const runtime = "nodejs";
 
@@ -12,15 +13,6 @@ export async function GET(request) {
 
         return await getSalesSummary(request, user);
     } catch (error) {
-        const statusCode =
-            error.message === "Invalid or Expired Token" ? 401 : 500;
-
-        return Response.json(
-            {
-                success: false,
-                message: error.message,
-            },
-            { status: statusCode }
-        );
+        return handleReportRouteError(error);
     }
 }

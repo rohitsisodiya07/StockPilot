@@ -6,7 +6,8 @@ import authMiddleware from "@/Middleware/authMiddleware";
 import roleMiddleware from "@/Middleware/roleMiddleware";
 import * as stockMovementController from "@/Controller/stockMovementController";
 
-const allowStockMovement = roleMiddleware(1, 4);
+// Allow Admin (1), Inventory Manager (4), and Warehouse Staff (5) to perform stock movements
+const allowStockMovement = roleMiddleware(1, 4, 5);
 
 const handleError = (error) => {
     console.error("Stock Movement API Error:", error);

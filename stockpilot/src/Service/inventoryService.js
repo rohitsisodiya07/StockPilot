@@ -61,7 +61,7 @@ const createInventory = async (userId, roleId, data) => {
 };
 
 
-const getWarehouseInventory = async (userId, roleId, warehouseId) => {
+const getWarehouseInventory = async (userId, roleId, warehouseId, options = {}) => {
     if (!Number.isInteger(warehouseId) || warehouseId <= 0) {
         throw new Error("Invalid Warehouse ID");
     }
@@ -78,7 +78,7 @@ const getWarehouseInventory = async (userId, roleId, warehouseId) => {
         warehouseId
     );
 
-    return await inventoryRepository.getWarehouseInventory(warehouseId);
+    return await inventoryRepository.getWarehouseInventory(warehouseId, options);
 };
 
 
@@ -211,13 +211,9 @@ const getAllInventory = async (userId, roleId) => {
         return [];
     }
 
-    const inventoryRecords = await Promise.all(
-        warehouseIds.map((warehouseId) =>
-            inventoryRepository.getWarehouseInventory(warehouseId)
-        )
+    return await inventoryRepository.getInventoryByWarehouseIds(
+        warehouseIds
     );
-
-    return inventoryRecords.flat();
 };
 
 const getInventoryById = async (userId, roleId, inventoryId) => {

@@ -10,7 +10,8 @@ import {
     deleteProduct,
 } from "@/Controller/productController";
 
-const allowProductAccess = roleMiddleware(1, 4);
+const allowProductWrite = roleMiddleware(1, 4);
+const allowProductRead = roleMiddleware(1, 4, 5);
 
 // Error Handler
 const handleRouteError = (error, action) => {
@@ -44,7 +45,7 @@ export async function GET(request, { params }) {
         await connectDB();
 
         const user = await authMiddleware(request);
-        allowProductAccess(user);
+        allowProductRead(user);
 
         const { id } = await params;
 
@@ -60,7 +61,7 @@ export async function PUT(request, { params }) {
         await connectDB();
 
         const user = await authMiddleware(request);
-        allowProductAccess(user);
+        allowProductWrite(user);
 
         const { id } = await params;
 
@@ -76,7 +77,7 @@ export async function DELETE(request, { params }) {
         await connectDB();
 
         const user = await authMiddleware(request);
-        allowProductAccess(user);
+        allowProductWrite(user);
 
         const { id } = await params;
 

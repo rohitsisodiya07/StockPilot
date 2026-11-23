@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import AuthGuard from "@/components/auth/AuthGuard";
-import AdminLayout from "@/components/layout/AdminLayout";
 import api from "@/lib/api";
 
 function Icon({ name, size = 20, className = "" }) {
@@ -54,14 +53,14 @@ function SummaryCard({ title, value, note, icon, tone = "blue" }) {
     };
 
     return (
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:p-6">
+        <div className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:p-4">
             <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
-                    <p className="text-sm font-semibold text-slate-500 sm:text-base">{title}</p>
-                    <p className="mt-3 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">{value}</p>
-                    <p className="mt-2 text-sm text-slate-500">{note}</p>
+                    <p className="text-[11px] font-semibold text-slate-500 sm:text-[11px]">{title}</p>
+                    <p className="mt-3 text-[11px] font-bold tracking-tight text-slate-950 sm:text-[11px]">{value}</p>
+                    <p className="mt-2 text-[11px] text-slate-500">{note}</p>
                 </div>
-                <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ring-1 ${tones[tone]}`}>
+                <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ring-1 ${tones[tone]}`}>
                     <Icon name={icon} size={23} />
                 </div>
             </div>
@@ -269,25 +268,25 @@ function WarehouseDetailsContent() {
         : "border-blue-200 bg-blue-50 text-blue-700";
 
     return (
-        <div className="mx-auto max-w-[1680px] space-y-6 text-[15px] sm:space-y-8">
-            <section className="relative overflow-hidden rounded-3xl border border-blue-100 bg-gradient-to-br from-white via-white to-blue-50 px-5 py-6 shadow-sm sm:px-8 sm:py-8">
+        <div className="mx-auto max-w-[1600px] space-y-5 pb-8">
+            <section className="relative overflow-hidden rounded-xl border border-blue-100 bg-gradient-to-br from-white via-white to-blue-50 px-4 py-6 shadow-sm sm:px-4 sm:py-3">
                 <div className="absolute -right-12 -top-20 h-64 w-64 rounded-full bg-blue-100/60 blur-3xl" />
-                <div className="relative flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+                <div className="relative flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                     <div className="min-w-0">
-                        <button onClick={() => router.push("/admin/warehouses")} className="mb-5 inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-600 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700">
+                        <button onClick={() => router.push("/admin/warehouses")} className="mb-5 inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-[11px] font-semibold text-slate-600 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700">
                             <Icon name="back" size={17} /> Back to warehouses
                         </button>
                         <div className="flex items-start gap-4">
-                            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-600/20 sm:h-16 sm:w-16">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-lg shadow-blue-600/20 sm:h-16 sm:w-16">
                                 <Icon name="warehouse" size={29} />
                             </div>
                             <div className="min-w-0">
-                                <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-700">Warehouse profile · #{id}</p>
-                                <h1 className="mt-2 break-words text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl lg:text-5xl">
+                                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-blue-700">Warehouse profile · #{id}</p>
+                                <h1 className="mt-2 break-words text-[11px] font-bold tracking-tight text-slate-950 sm:text-[11px] lg:text-[11px]">
                                     {loading ? "Loading warehouse..." : warehouse?.name || "Warehouse details"}
                                 </h1>
                                 {warehouse && (
-                                    <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-slate-600 sm:text-base">
+                                    <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] text-slate-600 sm:text-[11px]">
                                         <span className="inline-flex items-center gap-2"><Icon name="pin" size={17} className="text-blue-600" />{warehouse.location || "Location unavailable"}</span>
                                         <span className="inline-flex items-center gap-2"><Icon name="calendar" size={17} className="text-blue-600" />Created {formatDate(warehouse.createdAt)}</span>
                                     </div>
@@ -295,62 +294,62 @@ function WarehouseDetailsContent() {
                             </div>
                         </div>
                     </div>
-                    <button onClick={() => loadDetails(true)} disabled={loading || refreshing} className="relative inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 disabled:opacity-60">
+                    <button onClick={() => loadDetails(true)} disabled={loading || refreshing} className="relative inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-semibold text-slate-700 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 disabled:opacity-60">
                         <Icon name="refresh" size={18} className={refreshing ? "animate-spin" : ""} /> Refresh data
                     </button>
                 </div>
             </section>
 
             {error && (
-                <div role="alert" className="flex flex-col gap-4 rounded-2xl border border-rose-200 bg-rose-50 p-5 sm:flex-row sm:items-center sm:justify-between">
+                <div role="alert" className="flex flex-col gap-4 rounded-xl border border-rose-200 bg-rose-50 p-5 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                         <p className="font-bold text-rose-900">Unable to load warehouse details</p>
-                        <p className="mt-1 text-sm text-rose-800">{error}</p>
+                        <p className="mt-1 text-[11px] text-rose-800">{error}</p>
                     </div>
-                    <button onClick={() => loadDetails()} className="rounded-xl border border-rose-200 bg-white px-4 py-2.5 text-sm font-semibold text-rose-700 hover:bg-rose-100">Try again</button>
+                    <button onClick={() => loadDetails()} className="rounded-xl border border-rose-200 bg-white px-4 py-2.5 text-[11px] font-semibold text-rose-700 hover:bg-rose-100">Try again</button>
                 </div>
             )}
 
             {loading ? (
-                <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-                    {[1, 2, 3].map((item) => <div key={item} className="h-36 animate-pulse rounded-2xl border border-slate-200 bg-white p-6"><div className="h-4 w-1/2 rounded bg-slate-100" /><div className="mt-5 h-9 w-1/3 rounded bg-slate-100" /><div className="mt-3 h-3 w-2/3 rounded bg-slate-100" /></div>)}
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                    {[1, 2, 3].map((item) => <div key={item} className="h-36 animate-pulse rounded-xl border border-slate-200 bg-white p-4"><div className="h-4 w-1/2 rounded bg-slate-100" /><div className="mt-5 h-9 w-1/3 rounded bg-slate-100" /><div className="mt-3 h-3 w-2/3 rounded bg-slate-100" /></div>)}
                 </div>
             ) : warehouse && !error ? (
                 <>
-                    <section className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                    <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                         <SummaryCard title="Unique products" value={summary.totalProducts ?? 0} note="Products stocked at this location" icon="package" tone="blue" />
                         <SummaryCard title="Total stock units" value={Number(summary.totalInventoryUnits ?? 0).toLocaleString()} note="Combined quantity across inventory" icon="boxes" tone="violet" />
                         <SummaryCard title="Low-stock products" value={summary.lowStockCount ?? lowStockItems.length} note="At or below reorder level" icon="alert" tone="amber" />
                     </section>
 
-                    <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-                        <div className="flex flex-col gap-2 border-b border-slate-100 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+                    <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                        <div className="flex flex-col gap-2 border-b border-slate-100 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between sm:px-4">
                             <div>
-                                <h2 className="text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">Inventory overview</h2>
-                                <p className="mt-1 text-sm text-slate-500 sm:text-base">Product quantities and reorder thresholds for this warehouse.</p>
+                                <h2 className="text-[11px] font-bold tracking-tight text-slate-950 sm:text-[11px]">Inventory overview</h2>
+                                <p className="mt-1 text-[11px] text-slate-500 sm:text-[11px]">Product quantities and reorder thresholds for this warehouse.</p>
                             </div>
-                            <span className="inline-flex w-fit items-center gap-2 rounded-xl bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-600"><Icon name="package" size={17} /> {inventory.length} records</span>
+                            <span className="inline-flex w-fit items-center gap-2 rounded-xl bg-slate-100 px-3 py-2 text-[11px] font-semibold text-slate-600"><Icon name="package" size={17} /> {inventory.length} records</span>
                         </div>
                         {inventory.length === 0 ? (
                             <div className="px-6 py-14 text-center">
-                                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-blue-600"><Icon name="package" size={26} /></div>
-                                <h3 className="mt-4 text-lg font-bold text-slate-900">No inventory recorded</h3>
-                                <p className="mt-1 text-sm text-slate-500">This warehouse does not have any inventory records yet.</p>
+                                <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600"><Icon name="package" size={26} /></div>
+                                <h3 className="mt-4 text-[11px] font-bold text-slate-900">No inventory recorded</h3>
+                                <p className="mt-1 text-[11px] text-slate-500">This warehouse does not have any inventory records yet.</p>
                             </div>
                         ) : (
                             <div className="overflow-x-auto">
                                 <table className="w-full min-w-[760px] border-collapse text-left">
-                                    <thead><tr className="bg-slate-50 text-xs uppercase tracking-wider text-slate-500"><th className="px-5 py-4 font-bold sm:px-6">Product</th><th className="px-5 py-4 font-bold">SKU</th><th className="px-5 py-4 text-right font-bold">Available units</th><th className="px-5 py-4 text-right font-bold">Reorder level</th><th className="px-5 py-4 font-bold">Stock status</th></tr></thead>
+                                    <thead><tr className="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-500"><th className="px-3 py-2.5 font-bold sm:px-4">Product</th><th className="px-3 py-2.5 font-bold">SKU</th><th className="px-3 py-2.5 text-right font-bold">Available units</th><th className="px-3 py-2.5 text-right font-bold">Reorder level</th><th className="px-3 py-2.5 font-bold">Stock status</th></tr></thead>
                                     <tbody className="divide-y divide-slate-100">
                                         {inventory.map((item) => {
                                             const isLow = Number(item.quantity) <= Number(item.reorderLevel);
                                             return (
                                                 <tr key={item.id} className="transition hover:bg-slate-50/80">
-                                                    <td className="px-5 py-4 sm:px-6"><div className="font-semibold text-slate-900">{item.product?.name || `Product #${item.productId}`}</div><div className="mt-1 text-xs text-slate-400">Product ID #{item.productId}</div></td>
-                                                    <td className="px-5 py-4 text-sm font-medium text-slate-600">{item.product?.sku || "—"}</td>
-                                                    <td className="px-5 py-4 text-right text-base font-bold tabular-nums text-slate-900">{Number(item.quantity || 0).toLocaleString()}</td>
-                                                    <td className="px-5 py-4 text-right text-sm tabular-nums text-slate-600">{Number(item.reorderLevel || 0).toLocaleString()}</td>
-                                                    <td className="px-5 py-4"><span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-bold ${isLow ? "border-amber-200 bg-amber-50 text-amber-800" : "border-emerald-200 bg-emerald-50 text-emerald-800"}`}><span className={`h-1.5 w-1.5 rounded-full ${isLow ? "bg-amber-500" : "bg-emerald-500"}`} />{isLow ? "Low stock" : "In stock"}</span></td>
+                                                    <td className="px-3 py-2.5 sm:px-4"><div className="font-semibold text-slate-900">{item.product?.name || `Product #${item.productId}`}</div><div className="mt-1 text-[11px] text-slate-400">Product ID #{item.productId}</div></td>
+                                                    <td className="px-3 py-2.5 text-[11px] font-medium text-slate-600">{item.product?.sku || "—"}</td>
+                                                    <td className="px-3 py-2.5 text-right text-[11px] font-bold tabular-nums text-slate-900">{Number(item.quantity || 0).toLocaleString()}</td>
+                                                    <td className="px-3 py-2.5 text-right text-[11px] tabular-nums text-slate-600">{Number(item.reorderLevel || 0).toLocaleString()}</td>
+                                                    <td className="px-3 py-2.5"><span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-bold ${isLow ? "border-amber-200 bg-amber-50 text-amber-800" : "border-emerald-200 bg-emerald-50 text-emerald-800"}`}><span className={`h-1.5 w-1.5 rounded-full ${isLow ? "bg-amber-500" : "bg-emerald-500"}`} />{isLow ? "Low stock" : "In stock"}</span></td>
                                                 </tr>
                                             );
                                         })}
@@ -360,60 +359,60 @@ function WarehouseDetailsContent() {
                         )}
                     </section>
 
-                    <section className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(360px,0.85fr)]">
-                        <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-                            <div className="border-b border-slate-100 px-5 py-5 sm:px-6">
+                    <section className="grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(360px,0.85fr)]">
+                        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                            <div className="border-b border-slate-100 px-3 py-2.5 sm:px-4">
                                 <div className="flex items-center gap-3">
-                                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-50 text-amber-700"><Icon name="alert" size={22} /></div>
-                                    <div><h2 className="text-xl font-bold text-slate-950">Low-stock alerts</h2><p className="mt-1 text-sm text-slate-500">Items at or below their reorder level.</p></div>
+                                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 text-amber-700"><Icon name="alert" size={22} /></div>
+                                    <div><h2 className="text-[11px] font-bold text-slate-950">Low-stock alerts</h2><p className="mt-1 text-[11px] text-slate-500">Items at or below their reorder level.</p></div>
                                 </div>
                             </div>
                             {lowStockItems.length === 0 ? (
-                                <div className="px-5 py-10 text-center sm:px-6">
-                                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600"><Icon name="check" size={24} /></div>
+                                <div className="px-4 py-10 text-center sm:px-4">
+                                    <div className="mx-auto flex h-9 w-9 items-center justify-center rounded-full bg-emerald-50 text-emerald-600"><Icon name="check" size={24} /></div>
                                     <p className="mt-3 font-semibold text-slate-900">All stocked products are above reorder level</p>
-                                    <p className="mt-1 text-sm text-slate-500">No low-stock products were returned by the API.</p>
+                                    <p className="mt-1 text-[11px] text-slate-500">No low-stock products were returned by the API.</p>
                                 </div>
                             ) : (
                                 <div className="divide-y divide-slate-100">
-                                    {lowStockItems.map((item) => <div key={item.id} className="flex items-center justify-between gap-4 px-5 py-4 sm:px-6"><div className="min-w-0"><p className="truncate font-semibold text-slate-900">{item.product?.name || `Product #${item.productId}`}</p><p className="mt-1 text-xs text-slate-500">{item.product?.sku || "SKU unavailable"}</p></div><div className="shrink-0 text-right"><p className="font-bold text-amber-700">{item.quantity} left</p><p className="text-xs text-slate-500">Reorder at {item.reorderLevel}</p></div></div>)}
+                                    {lowStockItems.map((item) => <div key={item.id} className="flex items-center justify-between gap-4 px-3 py-2.5 sm:px-4"><div className="min-w-0"><p className="truncate font-semibold text-slate-900">{item.product?.name || `Product #${item.productId}`}</p><p className="mt-1 text-[11px] text-slate-500">{item.product?.sku || "SKU unavailable"}</p></div><div className="shrink-0 text-right"><p className="font-bold text-amber-700">{item.quantity} left</p><p className="text-[11px] text-slate-500">Reorder at {item.reorderLevel}</p></div></div>)}
                                 </div>
                             )}
                         </div>
 
-                        <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-                            <div className="border-b border-slate-100 px-5 py-5 sm:px-6">
+                        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                            <div className="border-b border-slate-100 px-3 py-2.5 sm:px-4">
                                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                                     <div className="flex items-center gap-3">
-                                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-700"><Icon name="users" size={22} /></div>
-                                        <div><h2 className="text-xl font-bold text-slate-950">Assigned team</h2><p className="mt-1 text-sm text-slate-500">{assignedUsers.length} assigned {assignedUsers.length === 1 ? "user" : "users"}</p></div>
+                                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-700"><Icon name="users" size={22} /></div>
+                                        <div><h2 className="text-[11px] font-bold text-slate-950">Assigned team</h2><p className="mt-1 text-[11px] text-slate-500">{assignedUsers.length} assigned {assignedUsers.length === 1 ? "user" : "users"}</p></div>
                                     </div>
                                     <div className="flex flex-wrap gap-2">
-                                        <button onClick={() => openUserModal("existing")} className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-blue-200 hover:bg-blue-50"><Icon name="users" size={16} /> Assign existing</button>
-                                        <button onClick={() => openUserModal("create")} className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"><Icon name="userPlus" size={16} /> Create & assign</button>
+                                        <button onClick={() => openUserModal("existing")} className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-[11px] font-semibold text-slate-700 transition hover:border-blue-200 hover:bg-blue-50"><Icon name="users" size={16} /> Assign existing</button>
+                                        <button onClick={() => openUserModal("create")} className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-3.5 py-2.5 text-[11px] font-semibold text-white shadow-sm transition hover:bg-blue-700"><Icon name="userPlus" size={16} /> Create & assign</button>
                                     </div>
                                 </div>
                             </div>
-                            {(assignmentMessage || assignmentError) && !showUserModal && <div className={`mx-5 mt-4 rounded-xl border px-4 py-3 text-sm sm:mx-6 ${assignmentError ? "border-rose-200 bg-rose-50 text-rose-800" : "border-emerald-200 bg-emerald-50 text-emerald-800"}`}>{assignmentError || assignmentMessage}</div>}
+                            {(assignmentMessage || assignmentError) && !showUserModal && <div className={`mx-5 mt-4 rounded-xl border px-3 py-2.5 text-[11px] sm:mx-6 ${assignmentError ? "border-rose-200 bg-rose-50 text-rose-800" : "border-emerald-200 bg-emerald-50 text-emerald-800"}`}>{assignmentError || assignmentMessage}</div>}
                             {teamLoading ? (
-                                <div className="px-5 py-10 text-center text-sm text-slate-500 sm:px-6">Loading assigned users…</div>
+                                <div className="px-4 py-10 text-center text-[11px] text-slate-500 sm:px-4">Loading assigned users…</div>
                             ) : assignedUsers.length === 0 ? (
-                                <div className="px-5 py-10 text-center sm:px-6">
-                                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-500"><Icon name="users" size={23} /></div>
+                                <div className="px-4 py-10 text-center sm:px-4">
+                                    <div className="mx-auto flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-slate-500"><Icon name="users" size={23} /></div>
                                     <p className="mt-3 font-semibold text-slate-900">No users assigned</p>
-                                    <p className="mt-1 text-sm text-slate-500">No team members are assigned to this warehouse yet.</p>
+                                    <p className="mt-1 text-[11px] text-slate-500">No team members are assigned to this warehouse yet.</p>
                                 </div>
                             ) : (
                                 <div className="divide-y divide-slate-100">
                                     {assignedUsers.map((user) => (
-                                        <div key={user.id} className="flex items-start gap-3 px-5 py-4 sm:px-6">
-                                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 text-sm font-bold text-blue-800">{(user.name || "U").trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase()}</div>
+                                        <div key={user.id} className="flex items-start gap-3 px-3 py-2.5 sm:px-4">
+                                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 text-[11px] font-bold text-blue-800">{(user.name || "U").trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase()}</div>
                                             <div className="min-w-0 flex-1">
                                                 <p className="break-words font-semibold text-slate-900">{user.name}</p>
-                                                <p className="mt-1 flex items-center gap-1.5 break-all text-sm text-slate-500"><Icon name="mail" size={14} className="shrink-0" />{user.email}</p>
-                                                <span className={`mt-2 inline-flex rounded-full border px-2.5 py-1 text-xs font-bold ${roleTone(user.role)}`}>{roleLabel(user.role)}</span>
+                                                <p className="mt-1 flex items-center gap-1.5 break-all text-[11px] text-slate-500"><Icon name="mail" size={14} className="shrink-0" />{user.email}</p>
+                                                <span className={`mt-2 inline-flex rounded-full border px-2.5 py-1 text-[11px] font-bold ${roleTone(user.role)}`}>{roleLabel(user.role)}</span>
                                             </div>
-                                            <button onClick={() => handleRemoveAssignment(user.assignmentUserId ?? user.id)} disabled={removingAssignmentId === (user.assignmentUserId ?? user.id)} title="Unassign user" className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-rose-200 px-2.5 py-2 text-xs font-semibold text-rose-700 transition hover:bg-rose-50 disabled:opacity-50"><Icon name="trash" size={15} />{removingAssignmentId === (user.assignmentUserId ?? user.id) ? "Removing…" : "Unassign"}</button>
+                                            <button onClick={() => handleRemoveAssignment(user.assignmentUserId ?? user.id)} disabled={removingAssignmentId === (user.assignmentUserId ?? user.id)} title="Unassign user" className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-rose-200 px-2.5 py-2 text-[11px] font-semibold text-rose-700 transition hover:bg-rose-50 disabled:opacity-50"><Icon name="trash" size={15} />{removingAssignmentId === (user.assignmentUserId ?? user.id) ? "Removing…" : "Unassign"}</button>
                                         </div>
                                     ))}
                                 </div>
@@ -423,45 +422,45 @@ function WarehouseDetailsContent() {
 
                     {showUserModal && (
                         <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-950/50 p-4" role="dialog" aria-modal="true" aria-labelledby="assignment-modal-title">
-                            <div className="my-auto w-full max-w-xl rounded-3xl bg-white p-5 shadow-2xl sm:p-7">
+                            <div className="my-auto w-full max-w-xl rounded-xl bg-white p-5 shadow-2xl sm:p-7">
                                 <div className="flex items-start justify-between gap-4">
                                     <div>
-                                        <p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-700">{warehouse.name}</p>
-                                        <h2 id="assignment-modal-title" className="mt-1 text-2xl font-bold tracking-tight text-slate-950">{assignMode === "create" ? "Create & assign user" : "Assign existing user"}</h2>
-                                        <p className="mt-2 text-sm text-slate-500">Inventory Manager: maximum one per warehouse. Multiple Warehouse Staff are allowed.</p>
+                                        <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-blue-700">{warehouse.name}</p>
+                                        <h2 id="assignment-modal-title" className="mt-1 text-[11px] font-bold tracking-tight text-slate-950">{assignMode === "create" ? "Create & assign user" : "Assign existing user"}</h2>
+                                        <p className="mt-2 text-[11px] text-slate-500">Inventory Manager: maximum one per warehouse. Multiple Warehouse Staff are allowed.</p>
                                     </div>
                                     <button onClick={() => setShowUserModal(false)} aria-label="Close modal" className="rounded-xl p-2 text-slate-500 hover:bg-slate-100"><Icon name="close" size={20} /></button>
                                 </div>
                                 <div className="mt-5 grid grid-cols-2 gap-2 rounded-xl bg-slate-100 p-1">
-                                    <button onClick={() => { setAssignMode("existing"); setAssignmentError(""); }} className={`rounded-lg px-3 py-2.5 text-sm font-semibold transition ${assignMode === "existing" ? "bg-white text-slate-950 shadow-sm" : "text-slate-500 hover:text-slate-800"}`}>Existing user</button>
-                                    <button onClick={() => { setAssignMode("create"); setAssignmentError(""); }} className={`rounded-lg px-3 py-2.5 text-sm font-semibold transition ${assignMode === "create" ? "bg-white text-slate-950 shadow-sm" : "text-slate-500 hover:text-slate-800"}`}>Create new user</button>
+                                    <button onClick={() => { setAssignMode("existing"); setAssignmentError(""); }} className={`rounded-lg px-3 py-2.5 text-[11px] font-semibold transition ${assignMode === "existing" ? "bg-white text-slate-950 shadow-sm" : "text-slate-500 hover:text-slate-800"}`}>Existing user</button>
+                                    <button onClick={() => { setAssignMode("create"); setAssignmentError(""); }} className={`rounded-lg px-3 py-2.5 text-[11px] font-semibold transition ${assignMode === "create" ? "bg-white text-slate-950 shadow-sm" : "text-slate-500 hover:text-slate-800"}`}>Create new user</button>
                                 </div>
-                                {assignmentError && <div role="alert" className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">{assignmentError}</div>}
+                                {assignmentError && <div role="alert" className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2.5 text-[11px] text-rose-800">{assignmentError}</div>}
                                 {assignMode === "existing" ? (
                                     <form onSubmit={handleAssignExisting} className="mt-5 space-y-4">
-                                        <label className="block"><span className="mb-1.5 block text-sm font-semibold text-slate-700">Select user</span><select value={selectedUserId} onChange={(event) => setSelectedUserId(event.target.value)} required className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"><option value="">Choose Inventory Manager or Warehouse Staff</option>{availableUsers.map((user) => <option key={user.id} value={user.id}>{user.name} · {user.email} · {Number(user.roleId) === 4 ? "Inventory Manager" : "Warehouse Staff"}</option>)}</select><span className="mt-1.5 block text-xs text-slate-500">Users already assigned to this warehouse are hidden.</span></label>
-                                        {availableUsers.length === 0 && <p className="rounded-xl bg-amber-50 px-3 py-2.5 text-sm text-amber-800">No available users found. You can create a new user instead.</p>}
-                                        <div className="flex justify-end gap-3 pt-2"><button type="button" onClick={() => setShowUserModal(false)} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50">Cancel</button><button type="submit" disabled={assignmentBusy || !selectedUserId} className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">{assignmentBusy ? "Assigning…" : "Assign user"}</button></div>
+                                        <label className="block"><span className="mb-1.5 block text-[11px] font-semibold text-slate-700">Select user</span><select value={selectedUserId} onChange={(event) => setSelectedUserId(event.target.value)} required className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-[11px] outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"><option value="">Choose Inventory Manager or Warehouse Staff</option>{availableUsers.map((user) => <option key={user.id} value={user.id}>{user.name} · {user.email} · {Number(user.roleId) === 4 ? "Inventory Manager" : "Warehouse Staff"}</option>)}</select><span className="mt-1.5 block text-[11px] text-slate-500">Users already assigned to this warehouse are hidden.</span></label>
+                                        {availableUsers.length === 0 && <p className="rounded-xl bg-amber-50 px-3 py-2.5 text-[11px] text-amber-800">No available users found. You can create a new user instead.</p>}
+                                        <div className="flex justify-end gap-3 pt-2"><button type="button" onClick={() => setShowUserModal(false)} className="rounded-xl border border-slate-200 px-4 py-2.5 text-[11px] font-semibold text-slate-600 hover:bg-slate-50">Cancel</button><button type="submit" disabled={assignmentBusy || !selectedUserId} className="rounded-xl bg-blue-600 px-4 py-2.5 text-[11px] font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">{assignmentBusy ? "Assigning…" : "Assign user"}</button></div>
                                     </form>
                                 ) : (
                                     <form onSubmit={handleCreateAndAssign} className="mt-5 space-y-4">
-                                        <label className="block"><span className="mb-1.5 block text-sm font-semibold text-slate-700">Full name</span><input required minLength={2} maxLength={255} value={userForm.name} onChange={(event) => setUserForm((current) => ({ ...current, name: event.target.value }))} placeholder="Enter full name" className="w-full rounded-xl border border-slate-200 px-3.5 py-3 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" /></label>
-                                        <label className="block"><span className="mb-1.5 block text-sm font-semibold text-slate-700">Email address</span><input required type="email" value={userForm.email} onChange={(event) => setUserForm((current) => ({ ...current, email: event.target.value }))} placeholder="name@company.com" className="w-full rounded-xl border border-slate-200 px-3.5 py-3 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" /></label>
-                                        <label className="block"><span className="mb-1.5 block text-sm font-semibold text-slate-700">Temporary password</span><input required minLength={6} type="password" value={userForm.password} onChange={(event) => setUserForm((current) => ({ ...current, password: event.target.value }))} placeholder="At least 6 characters" className="w-full rounded-xl border border-slate-200 px-3.5 py-3 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" /></label>
-                                        <label className="block"><span className="mb-1.5 block text-sm font-semibold text-slate-700">Role</span><select value={userForm.roleId} onChange={(event) => setUserForm((current) => ({ ...current, roleId: event.target.value }))} className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"><option value="4">Inventory Manager</option><option value="5">Warehouse Staff</option></select></label>
-                                        {Number(userForm.roleId) === 4 && assignedUsers.some((user) => Number(user.roleId) === 4 || user.role === "INVENTORY_MANAGER") && <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-800">This warehouse already has an Inventory Manager. Unassign the current manager before creating another one.</p>}
-                                        <div className="flex justify-end gap-3 pt-2"><button type="button" onClick={() => setShowUserModal(false)} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50">Cancel</button><button type="submit" disabled={assignmentBusy} className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">{assignmentBusy ? "Creating & assigning…" : "Create & assign"}</button></div>
+                                        <label className="block"><span className="mb-1.5 block text-[11px] font-semibold text-slate-700">Full name</span><input required minLength={2} maxLength={255} value={userForm.name} onChange={(event) => setUserForm((current) => ({ ...current, name: event.target.value }))} placeholder="Enter full name" className="w-full rounded-xl border border-slate-200 px-3.5 py-3 text-[11px] outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" /></label>
+                                        <label className="block"><span className="mb-1.5 block text-[11px] font-semibold text-slate-700">Email address</span><input required type="email" value={userForm.email} onChange={(event) => setUserForm((current) => ({ ...current, email: event.target.value }))} placeholder="name@company.com" className="w-full rounded-xl border border-slate-200 px-3.5 py-3 text-[11px] outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" /></label>
+                                        <label className="block"><span className="mb-1.5 block text-[11px] font-semibold text-slate-700">Temporary password</span><input required minLength={6} type="password" value={userForm.password} onChange={(event) => setUserForm((current) => ({ ...current, password: event.target.value }))} placeholder="At least 6 characters" className="w-full rounded-xl border border-slate-200 px-3.5 py-3 text-[11px] outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" /></label>
+                                        <label className="block"><span className="mb-1.5 block text-[11px] font-semibold text-slate-700">Role</span><select value={userForm.roleId} onChange={(event) => setUserForm((current) => ({ ...current, roleId: event.target.value }))} className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-[11px] outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"><option value="4">Inventory Manager</option><option value="5">Warehouse Staff</option></select></label>
+                                        {Number(userForm.roleId) === 4 && assignedUsers.some((user) => Number(user.roleId) === 4 || user.role === "INVENTORY_MANAGER") && <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-[11px] text-amber-800">This warehouse already has an Inventory Manager. Unassign the current manager before creating another one.</p>}
+                                        <div className="flex justify-end gap-3 pt-2"><button type="button" onClick={() => setShowUserModal(false)} className="rounded-xl border border-slate-200 px-4 py-2.5 text-[11px] font-semibold text-slate-600 hover:bg-slate-50">Cancel</button><button type="submit" disabled={assignmentBusy} className="rounded-xl bg-blue-600 px-4 py-2.5 text-[11px] font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">{assignmentBusy ? "Creating & assigning…" : "Create & assign"}</button></div>
                                     </form>
                                 )}
                             </div>
                         </div>
                     )}
 
-                    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-                        <h2 className="text-lg font-bold text-slate-950">Warehouse information</h2>
+                    <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-4">
+                        <h2 className="text-[11px] font-bold text-slate-950">Warehouse information</h2>
                         <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                            <div className="rounded-xl bg-slate-50 p-4"><p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500"><Icon name="map" size={15} /> Full address</p><p className="mt-2 whitespace-pre-wrap font-medium leading-6 text-slate-800">{warehouse.address || "Address unavailable"}</p></div>
-                            <div className="rounded-xl bg-slate-50 p-4"><p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500"><Icon name="calendar" size={15} /> Record dates</p><p className="mt-2 text-sm text-slate-700">Created: <span className="font-semibold">{formatDate(warehouse.createdAt)}</span></p><p className="mt-1 text-sm text-slate-700">Last updated: <span className="font-semibold">{formatDate(warehouse.updatedAt)}</span></p></div>
+                            <div className="rounded-xl bg-slate-50 p-4"><p className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-slate-500"><Icon name="map" size={15} /> Full address</p><p className="mt-2 whitespace-pre-wrap font-medium leading-6 text-slate-800">{warehouse.address || "Address unavailable"}</p></div>
+                            <div className="rounded-xl bg-slate-50 p-4"><p className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-slate-500"><Icon name="calendar" size={15} /> Record dates</p><p className="mt-2 text-[11px] text-slate-700">Created: <span className="font-semibold">{formatDate(warehouse.createdAt)}</span></p><p className="mt-1 text-[11px] text-slate-700">Last updated: <span className="font-semibold">{formatDate(warehouse.updatedAt)}</span></p></div>
                         </div>
                     </section>
                 </>
@@ -473,9 +472,7 @@ function WarehouseDetailsContent() {
 export default function WarehouseDetailsPage() {
     return (
         <AuthGuard allowedRoles={[1, 4, 5]}>
-            <AdminLayout>
-                <WarehouseDetailsContent />
-            </AdminLayout>
+            <WarehouseDetailsContent />
         </AuthGuard>
     );
 }
