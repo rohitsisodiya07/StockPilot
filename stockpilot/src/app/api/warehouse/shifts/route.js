@@ -8,8 +8,8 @@ import { logAudit } from "@/lib/audit";
 // GET /api/warehouse/shifts - Get active shift and past shift history
 export async function GET(request) {
     try {
-        await connectDB();
         const user = await authMiddleware(request);
+        await connectDB();
 
         const activeShift = await StaffShift.findOne({
             where: {
@@ -71,8 +71,8 @@ export async function GET(request) {
 // POST /api/warehouse/shifts - Clock in or Clock out
 export async function POST(request) {
     try {
-        await connectDB();
         const user = await authMiddleware(request);
+        await connectDB();
 
         const body = await request.json().catch(() => ({}));
         const { action, warehouseId, notes } = body;
