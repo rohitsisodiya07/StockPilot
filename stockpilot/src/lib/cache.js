@@ -57,7 +57,15 @@ class HybridCache {
     initRedis() {
         try {
             const redisUrl = process.env.REDIS_URL;
-            const host = process.env.REDIS_HOST || "127.0.0.1";
+            const redisHost = process.env.REDIS_HOST;
+
+            // Only attempt Redis connection if explicitly configured in environment
+            if (!redisUrl && !redisHost) {
+                this.redisConnected = false;
+                return;
+            }
+
+            const host = redisHost || "127.0.0.1";
             const port = Number(process.env.REDIS_PORT) || 6379;
             const password = process.env.REDIS_PASSWORD || undefined;
 

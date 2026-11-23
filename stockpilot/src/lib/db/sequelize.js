@@ -23,13 +23,15 @@ const createSequelizeInstance = () => {
                           rejectUnauthorized: false,
                       },
                       connectTimeout: 20000,
+                      enableKeepAlive: true,
+                      keepAliveInitialDelay: 10000,
                   }
                 : {},
             pool: {
-                max: 10,
-                min: 2,
+                max: 15,
+                min: isDev ? 1 : 0,
                 acquire: 30000,
-                idle: 10000,
+                idle: 60000,
             },
         }
     );
@@ -38,6 +40,8 @@ const createSequelizeInstance = () => {
 // Global singleton pattern for Sequelize in both Dev & Prod (prevents connection leaks across hot-reloads)
 if (!globalThis.sequelizeGlobal) {
     globalThis.sequelizeGlobal = createSequelizeInstance();
+    // Warm up connection pool in background to eliminate first-request cold start
+    globalThis.sequelizeGlobal.authenticate().catch(() => {});
 }
 
 const sequelize = globalThis.sequelizeGlobal;
