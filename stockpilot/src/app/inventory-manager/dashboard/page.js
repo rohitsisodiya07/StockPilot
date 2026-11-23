@@ -99,9 +99,9 @@ function SectionHeading({ title, description, action }) {
     return (
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div>
-                <h2 className="text-sm font-semibold text-gray-900">{title}</h2>
+                <h2 className="text-sm font-semibold text-gray-900 dark:text-white">{title}</h2>
                 {description && (
-                    <p className="mt-1 text-xs text-gray-500">{description}</p>
+                    <p className="mt-1 text-xs text-gray-500 dark:text-slate-400">{description}</p>
                 )}
             </div>
             {action}
@@ -113,19 +113,19 @@ function StatusBadge({ status }) {
     const value = String(status || "").toUpperCase();
 
     const styles = {
-        IN: "bg-green-50 text-green-700",
-        OUT: "bg-orange-50 text-orange-700",
-        DRAFT: "bg-gray-100 text-gray-600",
-        ORDERED: "bg-blue-50 text-blue-700",
-        RECEIVED: "bg-green-50 text-green-700",
-        CONFIRMED: "bg-blue-50 text-blue-700",
-        DISPATCHED: "bg-purple-50 text-purple-700",
-        CANCELLED: "bg-red-50 text-red-700",
+        IN: "bg-green-50 dark:bg-green-950/50 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-900/50",
+        OUT: "bg-orange-50 dark:bg-orange-950/50 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-900/50",
+        DRAFT: "bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300",
+        ORDERED: "bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-900/50",
+        RECEIVED: "bg-green-50 dark:bg-green-950/50 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-900/50",
+        CONFIRMED: "bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-900/50",
+        DISPATCHED: "bg-purple-50 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-900/50",
+        CANCELLED: "bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-900/50",
     };
 
     return (
         <span
-            className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${styles[value] || "bg-gray-100 text-gray-600"
+            className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${styles[value] || "bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300"
                 }`}
         >
             {value || "-"}
@@ -135,7 +135,7 @@ function StatusBadge({ status }) {
 
 function EmptyState({ message }) {
     return (
-        <div className="py-8 text-center text-xs text-gray-500">{message}</div>
+        <div className="py-8 text-center text-xs text-gray-500 dark:text-slate-400">{message}</div>
     );
 }
 
@@ -145,7 +145,7 @@ function LoadingRows() {
             {[1, 2, 3].map((item) => (
                 <div
                     key={item}
-                    className="h-9 animate-pulse rounded-lg bg-gray-100"
+                    className="h-9 animate-pulse rounded-lg bg-gray-100 dark:bg-slate-800"
                 />
             ))}
         </div>
@@ -335,12 +335,12 @@ function DashboardContent() {
     return (
         <div className="mx-auto max-w-[1600px] space-y-5 pb-8">
             {/* Header */}
-            <div className="flex flex-col justify-between gap-4 rounded-xl border border-gray-200 bg-white p-5 sm:flex-row sm:items-center">
+            <div className="flex flex-col justify-between gap-4 rounded-xl border border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 sm:flex-row sm:items-center">
                 <div>
-                    <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">
+                    <h1 className="text-xl font-bold text-gray-900 dark:text-white sm:text-2xl">
                         Inventory Dashboard
                     </h1>
-                    <p className="mt-1 text-xs text-gray-500">
+                    <p className="mt-1 text-xs text-gray-500 dark:text-slate-400">
                         Monitor your assigned warehouses, inventory and stock activity.
                     </p>
                 </div>
@@ -351,7 +351,7 @@ function DashboardContent() {
                         <select
                             value={warehouseId}
                             onChange={(e) => handleWarehouseChange(e.target.value)}
-                            className="min-w-[190px] rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs text-gray-700 outline-none focus:border-blue-500"
+                            className="min-w-[190px] rounded-lg border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-xs text-gray-700 dark:text-slate-200 outline-none focus:border-blue-500"
                         >
                             <option value="">All Assigned Warehouses</option>
 
@@ -378,7 +378,7 @@ function DashboardContent() {
                     <button
                         onClick={exportCSV}
                         disabled={!dashboard}
-                        className="rounded-lg bg-gray-900 px-4 py-2 text-xs font-medium text-white transition hover:bg-gray-700 disabled:opacity-50"
+                        className="rounded-lg bg-gray-900 dark:bg-blue-600 px-4 py-2 text-xs font-medium text-white transition hover:bg-gray-700 dark:hover:bg-blue-700 disabled:opacity-50 cursor-pointer"
                     >
                         Export CSV
                     </button>

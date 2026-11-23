@@ -59,7 +59,7 @@ const dateTime = (value) => {
 function Card({ children, className = "" }) {
     return (
         <section
-            className={`min-w-0 rounded-2xl border border-slate-200 bg-white shadow-sm ${className}`}
+            className={`min-w-0 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm ${className}`}
         >
             {children}
         </section>
@@ -69,12 +69,12 @@ function Card({ children, className = "" }) {
 function SectionHeading({ title, subtitle }) {
     return (
         <div className="mb-4">
-            <h2 className="text-base font-bold text-slate-900 sm:text-lg">
+            <h2 className="text-base font-bold text-slate-900 dark:text-white sm:text-lg">
                 {title}
             </h2>
 
             {subtitle && (
-                <p className="mt-1 text-xs text-slate-500 sm:text-sm">
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 sm:text-sm">
                     {subtitle}
                 </p>
             )}
@@ -84,7 +84,7 @@ function SectionHeading({ title, subtitle }) {
 
 function EmptyState({ children = "No data available." }) {
     return (
-        <div className="flex min-h-40 items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50 px-5 text-center text-xs text-slate-500">
+        <div className="flex min-h-40 items-center justify-center rounded-xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 px-5 text-center text-xs text-slate-500 dark:text-slate-400">
             {children}
         </div>
     );
@@ -288,19 +288,19 @@ function DashboardContent() {
         <div className="mx-auto max-w-[1600px] space-y-5 pb-8">
 
             {/* Dashboard Header */}
-            <Card className="relative overflow-hidden border-blue-100 bg-gradient-to-r from-blue-50 via-sky-50 to-white p-5 sm:p-6">
+            <Card className="relative overflow-hidden border-blue-100 dark:border-slate-800 bg-gradient-to-r from-blue-50 via-sky-50 to-white dark:from-slate-900 dark:via-slate-900/90 dark:to-slate-900 p-5 sm:p-6">
                 <div className="relative z-10">
-                    <p className="text-xs font-medium text-slate-500">
+                    <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
                         Home / Dashboard
                     </p>
 
                     <div className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                         <div>
-                            <h1 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
+                            <h1 className="text-2xl font-bold tracking-tight text-slate-950 dark:text-white sm:text-3xl">
                                 Warehouse Dashboard
                             </h1>
 
-                            <p className="mt-2 max-w-2xl text-xs leading-6 text-slate-600 sm:text-sm">
+                            <p className="mt-2 max-w-2xl text-xs leading-6 text-slate-600 dark:text-slate-300 sm:text-sm">
                                 View inventory levels, warehouse users, stock movement,
                                 and order activity for a selected warehouse.
                             </p>
@@ -317,14 +317,14 @@ function DashboardContent() {
                     </div>
                 </div>
 
-                <div className="pointer-events-none absolute -right-10 -top-16 h-56 w-56 rounded-full border-[30px] border-white/70" />
+                <div className="pointer-events-none absolute -right-10 -top-16 h-56 w-56 rounded-full border-[30px] border-white/70 dark:border-white/5" />
             </Card>
 
             {/* Warehouse Selector */}
             <Card className="p-4 sm:p-5">
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
                     <label className="block">
-                        <span className="mb-2 block text-xs font-semibold text-slate-700">
+                        <span className="mb-2 block text-xs font-semibold text-slate-700 dark:text-slate-300">
                             Select Warehouse
                         </span>
 
@@ -333,7 +333,7 @@ function DashboardContent() {
                             onChange={(event) =>
                                 changeWarehouse(event.target.value)
                             }
-                            className="min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3.5 text-sm font-medium text-slate-800 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-50"
+                            className="min-h-11 w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3.5 text-sm font-medium text-slate-800 dark:text-slate-100 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-50 dark:focus:ring-blue-900/30"
                         >
                             <option value="">
                                 All accessible warehouses
@@ -371,17 +371,17 @@ function DashboardContent() {
                 </div>
 
                 {selectedWarehouse && (
-                    <div className="mt-4 flex flex-wrap items-center gap-3 rounded-xl bg-blue-50 p-3">
-                        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-lg text-blue-700">
+                    <div className="mt-4 flex flex-wrap items-center gap-3 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900/40 p-3">
+                        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white dark:bg-slate-800 text-lg text-blue-700 dark:text-blue-400">
                             ⌂
                         </span>
 
                         <div>
-                            <p className="text-sm font-bold text-slate-900">
+                            <p className="text-sm font-bold text-slate-900 dark:text-white">
                                 {selectedWarehouse.name}
                             </p>
 
-                            <p className="text-xs text-slate-600">
+                            <p className="text-xs text-slate-600 dark:text-slate-400">
                                 {selectedWarehouse.location || "Location not specified"}
                             </p>
                         </div>
@@ -523,45 +523,45 @@ function DashboardContent() {
                                     changeWarehouse(String(item.warehouseId))
                                 }
                                 className={`rounded-2xl border p-4 text-left transition hover:-translate-y-0.5 hover:shadow-md sm:p-5 ${String(item.warehouseId) === String(warehouseId)
-                                        ? "border-blue-400 bg-blue-50/50 ring-2 ring-blue-100"
-                                        : "border-slate-200 bg-white"
+                                        ? "border-blue-400 dark:border-blue-500 bg-blue-50/50 dark:bg-blue-950/40 ring-2 ring-blue-100 dark:ring-blue-900/40"
+                                        : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900"
                                     }`}
                             >
                                 <div className="flex items-start justify-between gap-3">
                                     <div>
-                                        <h3 className="text-sm font-bold text-slate-900">
+                                        <h3 className="text-sm font-bold text-slate-900 dark:text-white">
                                             {item.warehouseName}
                                         </h3>
 
-                                        <p className="mt-1 text-xs text-slate-500">
+                                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                                             {item.location || "Location not specified"}
                                         </p>
                                     </div>
 
-                                    <span className="text-xl text-blue-600">
+                                    <span className="text-xl text-blue-600 dark:text-blue-400">
                                         ⌂
                                     </span>
                                 </div>
 
-                                <p className="mt-5 text-xs font-medium text-slate-500">
+                                <p className="mt-5 text-xs font-medium text-slate-500 dark:text-slate-400">
                                     Current Units
                                 </p>
 
-                                <p className="mt-1 text-2xl font-bold text-slate-950">
+                                <p className="mt-1 text-2xl font-bold text-slate-950 dark:text-white">
                                     {number(item.totalUnits)}
                                 </p>
 
-                                <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-slate-600">
-                                    <span className="rounded-lg bg-slate-100 px-2.5 py-1.5">
+                                <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-slate-600 dark:text-slate-300">
+                                    <span className="rounded-lg bg-slate-100 dark:bg-slate-800 px-2.5 py-1.5">
                                         {number(item.uniqueProducts)} products
                                     </span>
 
-                                    <span className="rounded-lg bg-slate-100 px-2.5 py-1.5">
+                                    <span className="rounded-lg bg-slate-100 dark:bg-slate-800 px-2.5 py-1.5">
                                         {number(item.inventoryRecords)} records
                                     </span>
                                 </div>
 
-                                <p className="mt-3 text-xs font-semibold text-blue-700">
+                                <p className="mt-3 text-xs font-semibold text-blue-700 dark:text-blue-400">
                                     View Warehouse →
                                 </p>
                             </button>
@@ -592,16 +592,16 @@ function DashboardContent() {
                         <Card className="p-4 sm:p-5">
                             <div className="flex items-center justify-between gap-3">
                                 <div>
-                                    <h3 className="text-sm font-bold text-slate-900">
+                                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">
                                         Inventory Managers
                                     </h3>
 
-                                    <p className="mt-1 text-xs text-slate-500">
+                                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                                         Managers assigned to this warehouse
                                     </p>
                                 </div>
 
-                                <span className="rounded-xl bg-violet-50 px-3 py-2 text-xs font-bold text-violet-700">
+                                <span className="rounded-xl bg-violet-50 dark:bg-violet-950/40 px-3 py-2 text-xs font-bold text-violet-700 dark:text-violet-300 border border-violet-100 dark:border-violet-900/40">
                                     {managers.length}{" "}
                                     {managers.length === 1 ? "manager" : "managers"}
                                 </span>
@@ -612,25 +612,25 @@ function DashboardContent() {
                                     managers.map((manager) => (
                                         <div
                                             key={manager.id}
-                                            className="flex items-center gap-3 rounded-xl border border-slate-100 p-3 transition hover:border-violet-200 hover:bg-violet-50/40"
+                                            className="flex items-center gap-3 rounded-xl border border-slate-100 dark:border-slate-800 p-3 transition hover:border-violet-200 dark:hover:border-violet-800 hover:bg-violet-50/40 dark:hover:bg-violet-950/20"
                                         >
-                                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-100 text-sm font-bold text-violet-700">
+                                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-100 dark:bg-violet-900/60 text-sm font-bold text-violet-700 dark:text-violet-300">
                                                 {(manager.name || "M")
                                                     .charAt(0)
                                                     .toUpperCase()}
                                             </div>
 
                                             <div className="min-w-0">
-                                                <p className="truncate text-xs font-semibold text-slate-900">
+                                                <p className="truncate text-xs font-semibold text-slate-900 dark:text-white">
                                                     {manager.name}
                                                 </p>
 
-                                                <p className="mt-1 truncate text-[11px] text-slate-500">
+                                                <p className="mt-1 truncate text-[11px] text-slate-500 dark:text-slate-400">
                                                     {manager.email || `User ID: ${manager.id}`}
                                                 </p>
                                             </div>
 
-                                            <span className="ml-auto shrink-0 rounded-lg bg-violet-50 px-2.5 py-1.5 text-[10px] font-bold text-violet-700">
+                                            <span className="ml-auto shrink-0 rounded-lg bg-violet-50 dark:bg-violet-950/40 px-2.5 py-1.5 text-[10px] font-bold text-violet-700 dark:text-violet-300 border border-violet-100 dark:border-violet-900/40">
                                                 Manager
                                             </span>
                                         </div>
@@ -647,16 +647,16 @@ function DashboardContent() {
                         <Card className="p-4 sm:p-5">
                             <div className="flex items-center justify-between gap-3">
                                 <div>
-                                    <h3 className="text-sm font-bold text-slate-900">
+                                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">
                                         Warehouse Staff
                                     </h3>
 
-                                    <p className="mt-1 text-xs text-slate-500">
+                                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                                         Staff assigned to this warehouse
                                     </p>
                                 </div>
 
-                                <span className="rounded-xl bg-blue-50 px-3 py-2 text-xs font-bold text-blue-700">
+                                <span className="rounded-xl bg-blue-50 dark:bg-blue-950/40 px-3 py-2 text-xs font-bold text-blue-700 dark:text-blue-300 border border-blue-100 dark:border-blue-900/40">
                                     {staff.length}{" "}
                                     {staff.length === 1 ? "member" : "members"}
                                 </span>
@@ -667,25 +667,25 @@ function DashboardContent() {
                                     staff.map((member) => (
                                         <div
                                             key={member.id}
-                                            className="flex items-center gap-3 rounded-xl border border-slate-100 p-3 transition hover:bg-blue-50/30"
+                                            className="flex items-center gap-3 rounded-xl border border-slate-100 dark:border-slate-800 p-3 transition hover:bg-blue-50/30 dark:hover:bg-blue-950/20"
                                         >
-                                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-700">
+                                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/60 text-sm font-bold text-blue-700 dark:text-blue-300">
                                                 {(member.name || "S")
                                                     .charAt(0)
                                                     .toUpperCase()}
                                             </div>
 
                                             <div className="min-w-0">
-                                                <p className="truncate text-xs font-semibold text-slate-900">
+                                                <p className="truncate text-xs font-semibold text-slate-900 dark:text-white">
                                                     {member.name}
                                                 </p>
 
-                                                <p className="mt-1 truncate text-[11px] text-slate-500">
+                                                <p className="mt-1 truncate text-[11px] text-slate-500 dark:text-slate-400">
                                                     {member.email || `User ID: ${member.id}`}
                                                 </p>
                                             </div>
 
-                                            <span className="ml-auto rounded-lg bg-blue-50 px-2.5 py-1.5 text-[10px] font-semibold text-blue-700">
+                                            <span className="ml-auto rounded-lg bg-blue-50 dark:bg-blue-950/40 px-2.5 py-1.5 text-[10px] font-semibold text-blue-700 dark:text-blue-300 border border-blue-100 dark:border-blue-900/40">
                                                 Staff
                                             </span>
                                         </div>
@@ -738,7 +738,7 @@ function DashboardContent() {
                             key={group.title}
                             className="p-4 sm:p-5"
                         >
-                            <h3 className="text-sm font-bold text-slate-900">
+                            <h3 className="text-sm font-bold text-slate-900 dark:text-white">
                                 {group.title}
                             </h3>
 
@@ -746,13 +746,13 @@ function DashboardContent() {
                                 {group.values.map(([label, value]) => (
                                     <div
                                         key={label}
-                                        className="rounded-xl border border-slate-100 bg-slate-50/60 p-3"
+                                        className="rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/50 p-3"
                                     >
-                                        <p className="text-[11px] text-slate-500">
+                                        <p className="text-[11px] text-slate-500 dark:text-slate-400">
                                             {label}
                                         </p>
 
-                                        <p className="mt-1.5 text-xl font-bold text-slate-900">
+                                        <p className="mt-1.5 text-xl font-bold text-slate-900 dark:text-white">
                                             {number(value)}
                                         </p>
                                     </div>
@@ -881,24 +881,24 @@ function DashboardContent() {
                 />
 
                 <Card className="overflow-hidden">
-                    <div className="flex flex-col gap-3 border-b border-slate-100 p-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+                    <div className="flex flex-col gap-3 border-b border-slate-100 dark:border-slate-800 p-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
                         <div>
-                            <h3 className="text-sm font-bold text-slate-900">
+                            <h3 className="text-sm font-bold text-slate-900 dark:text-white">
                                 Stock Movement Records
                             </h3>
 
-                            <p className="mt-1 text-xs text-slate-500">
+                            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                                 Page {currentPage} of {totalPages} ·{" "}
                                 {number(totalRecords)} records
                             </p>
                         </div>
 
                         <div className="flex flex-wrap gap-2">
-                            <span className="rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700">
+                            <span className="rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-900/40 px-3 py-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
                                 IN: {number(stockTotals.stockIn)}
                             </span>
 
-                            <span className="rounded-lg bg-orange-50 px-3 py-1.5 text-xs font-semibold text-orange-700">
+                            <span className="rounded-lg bg-orange-50 dark:bg-orange-950/40 border border-orange-100 dark:border-orange-900/40 px-3 py-1.5 text-xs font-semibold text-orange-700 dark:text-orange-400">
                                 OUT: {number(stockTotals.stockOut)}
                             </span>
                         </div>
@@ -909,7 +909,7 @@ function DashboardContent() {
                             {[1, 2, 3].map((item) => (
                                 <div
                                     key={item}
-                                    className="h-14 animate-pulse rounded-xl bg-slate-100"
+                                    className="h-14 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800"
                                 />
                             ))}
                         </div>
@@ -923,7 +923,7 @@ function DashboardContent() {
                         <div className="overflow-x-auto">
                             <table className="w-full min-w-[850px] text-left text-xs">
                                 <thead>
-                                    <tr className="bg-slate-50 text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                                    <tr className="bg-slate-50 dark:bg-slate-800/60 text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800">
                                         <th className="px-5 py-3.5">
                                             Type
                                         </th>
@@ -950,20 +950,20 @@ function DashboardContent() {
                                     </tr>
                                 </thead>
 
-                                <tbody className="divide-y divide-slate-100">
+                                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                                     {movements.map((movement) => {
                                         const isIn = movement.type === "IN";
 
                                         return (
                                             <tr
                                                 key={movement.id}
-                                                className="transition hover:bg-slate-50"
+                                                className="transition hover:bg-slate-50 dark:hover:bg-slate-800/40"
                                             >
                                                 <td className="px-5 py-3.5">
                                                     <span
                                                         className={`inline-flex whitespace-nowrap rounded-lg px-2.5 py-1.5 text-[11px] font-bold ${isIn
-                                                                ? "bg-emerald-50 text-emerald-700"
-                                                                : "bg-orange-50 text-orange-700"
+                                                                ? "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/50"
+                                                                : "bg-orange-50 dark:bg-orange-950/50 text-orange-700 dark:text-orange-400 border border-orange-100 dark:border-orange-900/50"
                                                             }`}
                                                     >
                                                         {isIn
@@ -973,24 +973,24 @@ function DashboardContent() {
                                                 </td>
 
                                                 <td className="px-5 py-3.5">
-                                                    <p className="text-xs font-semibold text-slate-800">
+                                                    <p className="text-xs font-semibold text-slate-800 dark:text-white">
                                                         {movement.inventory?.product?.name || "—"}
                                                     </p>
 
-                                                    <p className="mt-1 text-[10px] text-slate-500">
+                                                    <p className="mt-1 text-[10px] text-slate-500 dark:text-slate-400">
                                                         {movement.inventory?.product?.sku ||
                                                             `Inventory #${movement.inventoryId}`}
                                                     </p>
                                                 </td>
 
-                                                <td className="px-5 py-3.5 text-xs text-slate-700">
+                                                <td className="px-5 py-3.5 text-xs text-slate-700 dark:text-slate-300">
                                                     {movement.inventory?.warehouse?.name || "—"}
                                                 </td>
 
                                                 <td
                                                     className={`px-5 py-3.5 text-xs font-bold ${isIn
-                                                            ? "text-emerald-700"
-                                                            : "text-orange-700"
+                                                            ? "text-emerald-700 dark:text-emerald-400"
+                                                            : "text-orange-700 dark:text-orange-400"
                                                         }`}
                                                 >
                                                     {isIn ? "+" : "−"}
@@ -998,12 +998,12 @@ function DashboardContent() {
                                                 </td>
 
                                                 <td className="px-5 py-3.5">
-                                                    <p className="text-xs font-semibold text-slate-800">
+                                                    <p className="text-xs font-semibold text-slate-800 dark:text-white">
                                                         {movement.user?.name ||
                                                             `User #${movement.userId}`}
                                                     </p>
 
-                                                    <p className="mt-1 text-[10px] text-slate-500">
+                                                    <p className="mt-1 text-[10px] text-slate-500 dark:text-slate-400">
                                                         {Number(movement.user?.roleId) === 1
                                                             ? "Admin"
                                                             : Number(movement.user?.roleId) === 4
@@ -1014,7 +1014,7 @@ function DashboardContent() {
                                                     </p>
                                                 </td>
 
-                                                <td className="whitespace-nowrap px-5 py-3.5 text-xs text-slate-600">
+                                                <td className="whitespace-nowrap px-5 py-3.5 text-xs text-slate-600 dark:text-slate-400">
                                                     {dateTime(movement.createdAt)}
                                                 </td>
                                             </tr>
@@ -1026,8 +1026,8 @@ function DashboardContent() {
                     )}
 
                     {/* Pagination */}
-                    <div className="flex flex-col gap-3 border-t border-slate-100 p-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
-                        <p className="text-xs text-slate-500">
+                    <div className="flex flex-col gap-3 border-t border-slate-100 dark:border-slate-800 p-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
                             Showing{" "}
                             {movements.length
                                 ? (currentPage - 1) * LIMIT + 1
@@ -1048,12 +1048,12 @@ function DashboardContent() {
                                 onClick={() =>
                                     setPage((value) => Math.max(1, value - 1))
                                 }
-                                className="min-h-9 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                                className="min-h-9 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-50 dark:hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
                             >
                                 ← Previous
                             </button>
 
-                            <span className="min-w-16 text-center text-xs font-semibold text-slate-700">
+                            <span className="min-w-16 text-center text-xs font-semibold text-slate-700 dark:text-slate-300">
                                 {currentPage} / {totalPages}
                             </span>
 
@@ -1065,7 +1065,7 @@ function DashboardContent() {
                                         Math.min(totalPages, value + 1)
                                     )
                                 }
-                                className="min-h-9 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                                className="min-h-9 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-50 dark:hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
                             >
                                 Next →
                             </button>

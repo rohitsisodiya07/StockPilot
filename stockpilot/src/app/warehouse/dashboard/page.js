@@ -258,15 +258,15 @@ export default function WarehouseDashboard() {
                     type="button"
                     onClick={() => openQuickMove("IN")}
                     disabled={!selectedWarehouseId || warehouseInventory.length === 0}
-                    className="flex items-center justify-between p-4 rounded-xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50 hover:from-emerald-100 hover:to-teal-100 transition shadow-xs text-left group disabled:opacity-50 cursor-pointer"
+                    className="flex items-center justify-between p-4 rounded-xl border border-emerald-200 dark:border-emerald-900/50 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-teal-950/40 hover:from-emerald-100 hover:to-teal-100 transition shadow-xs text-left group disabled:opacity-50 cursor-pointer"
                 >
                     <div className="flex items-center gap-3">
                         <div className="h-10 w-10 rounded-lg bg-emerald-600 text-white flex items-center justify-center shadow-xs">
                             <Plus className="h-5 w-5" />
                         </div>
                         <div>
-                            <h4 className="text-sm font-bold text-slate-800">Quick Stock IN</h4>
-                            <p className="text-xs text-slate-500">Record incoming stock</p>
+                            <h4 className="text-sm font-bold text-slate-800 dark:text-white">Quick Stock IN</h4>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">Record incoming stock</p>
                         </div>
                     </div>
                     <ArrowDownRight className="h-5 w-5 text-emerald-600 group-hover:translate-x-0.5 transition" />
@@ -276,15 +276,15 @@ export default function WarehouseDashboard() {
                     type="button"
                     onClick={() => openQuickMove("OUT")}
                     disabled={!selectedWarehouseId || warehouseInventory.length === 0}
-                    className="flex items-center justify-between p-4 rounded-xl border border-rose-200 bg-gradient-to-r from-rose-50 to-orange-50 hover:from-rose-100 hover:to-orange-100 transition shadow-xs text-left group disabled:opacity-50 cursor-pointer"
+                    className="flex items-center justify-between p-4 rounded-xl border border-rose-200 dark:border-rose-900/50 bg-gradient-to-r from-rose-50 to-orange-50 dark:from-rose-950/40 dark:to-orange-950/40 hover:from-rose-100 hover:to-orange-100 transition shadow-xs text-left group disabled:opacity-50 cursor-pointer"
                 >
                     <div className="flex items-center gap-3">
                         <div className="h-10 w-10 rounded-lg bg-rose-600 text-white flex items-center justify-center shadow-xs">
                             <Minus className="h-5 w-5" />
                         </div>
                         <div>
-                            <h4 className="text-sm font-bold text-slate-800">Quick Stock OUT</h4>
-                            <p className="text-xs text-slate-500">Dispatch / adjust floor stock</p>
+                            <h4 className="text-sm font-bold text-slate-800 dark:text-white">Quick Stock OUT</h4>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">Dispatch / adjust floor stock</p>
                         </div>
                     </div>
                     <ArrowUpRight className="h-5 w-5 text-rose-600 group-hover:translate-x-0.5 transition" />
@@ -292,18 +292,18 @@ export default function WarehouseDashboard() {
 
                 <Link
                     href="/warehouse/inventory"
-                    className="flex items-center justify-between p-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition shadow-xs text-left group"
+                    className="flex items-center justify-between p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/80 transition shadow-xs text-left group"
                 >
                     <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-lg bg-slate-800 text-white flex items-center justify-center shadow-xs">
+                        <div className="h-10 w-10 rounded-lg bg-slate-800 dark:bg-slate-700 text-white flex items-center justify-center shadow-xs">
                             <Boxes className="h-5 w-5" />
                         </div>
                         <div>
-                            <h4 className="text-sm font-bold text-slate-800">Browse Full Inventory</h4>
-                            <p className="text-xs text-slate-500">Inspect all SKUs & reorder levels</p>
+                            <h4 className="text-sm font-bold text-slate-800 dark:text-white">Browse Full Inventory</h4>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">Inspect all SKUs & reorder levels</p>
                         </div>
                     </div>
-                    <span className="text-slate-400 group-hover:text-slate-700 transition">→</span>
+                    <span className="text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-200 transition">→</span>
                 </Link>
             </div>
 
@@ -377,75 +377,75 @@ export default function WarehouseDashboard() {
 
             {/* KPI Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
+                <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs">
                     <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                        <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                             Total Units In Stock
                         </span>
-                        <div className="h-8 w-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                        <div className="h-8 w-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
                             <Boxes className="h-4 w-4" />
                         </div>
                     </div>
-                    <p className="mt-3 text-2xl sm:text-3xl font-extrabold text-slate-900">
+                    <p className="mt-3 text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">
                         {loading ? "..." : Number(analytics?.metrics?.totalInventoryUnits || 0).toLocaleString()}
                     </p>
-                    <p className="mt-1 text-xs text-slate-400">Total units on facility shelves</p>
+                    <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">Total units on facility shelves</p>
                 </div>
 
-                <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
+                <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs">
                     <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                        <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                             Low Stock Items
                         </span>
-                        <div className="h-8 w-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+                        <div className="h-8 w-8 rounded-lg bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 flex items-center justify-center">
                             <AlertTriangle className="h-4 w-4" />
                         </div>
                     </div>
-                    <p className="mt-3 text-2xl sm:text-3xl font-extrabold text-amber-600">
+                    <p className="mt-3 text-2xl sm:text-3xl font-extrabold text-amber-600 dark:text-amber-400">
                         {loading ? "..." : analytics?.metrics?.lowStockCount ?? 0}
                     </p>
-                    <p className="mt-1 text-xs text-slate-400">Need replenishment</p>
+                    <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">Need replenishment</p>
                 </div>
 
-                <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
+                <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs">
                     <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                        <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                             Tracked Products
                         </span>
-                        <div className="h-8 w-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                        <div className="h-8 w-8 rounded-lg bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 flex items-center justify-center">
                             <Package className="h-4 w-4" />
                         </div>
                     </div>
-                    <p className="mt-3 text-2xl sm:text-3xl font-extrabold text-slate-900">
+                    <p className="mt-3 text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">
                         {loading ? "..." : analytics?.metrics?.totalProducts ?? 0}
                     </p>
-                    <p className="mt-1 text-xs text-slate-400">Distinct catalog items</p>
+                    <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">Distinct catalog items</p>
                 </div>
 
-                <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
+                <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs">
                     <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                        <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                             Movements Logged
                         </span>
-                        <div className="h-8 w-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center">
+                        <div className="h-8 w-8 rounded-lg bg-purple-50 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400 flex items-center justify-center">
                             <Activity className="h-4 w-4" />
                         </div>
                     </div>
-                    <p className="mt-3 text-2xl sm:text-3xl font-extrabold text-slate-900">
+                    <p className="mt-3 text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">
                         {loading ? "..." : analytics?.stockMovements?.pagination?.total ?? 0}
                     </p>
-                    <p className="mt-1 text-xs text-slate-400">Total movement audit entries</p>
+                    <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">Total movement audit entries</p>
                 </div>
             </div>
 
             {/* Split Section: Low Stock Warning + Recent Movements */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Low Stock Items List */}
-                <div className="rounded-2xl border border-slate-200 bg-white shadow-xs overflow-hidden">
-                    <div className="flex items-center justify-between border-b border-slate-100 p-4 sm:px-6">
+                <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs overflow-hidden">
+                    <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 p-4 sm:px-6">
                         <div className="flex items-center gap-2">
                             <TrendingDown className="h-5 w-5 text-amber-500" />
-                            <h3 className="text-sm font-bold text-slate-800">
+                            <h3 className="text-sm font-bold text-slate-800 dark:text-white">
                                 Low Stock Alerts
                             </h3>
                         </div>
@@ -524,11 +524,11 @@ export default function WarehouseDashboard() {
                 </div>
 
                 {/* Recent Movement History */}
-                <div className="rounded-2xl border border-slate-200 bg-white shadow-xs overflow-hidden">
-                    <div className="flex items-center justify-between border-b border-slate-100 p-4 sm:px-6">
+                <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs overflow-hidden">
+                    <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 p-4 sm:px-6">
                         <div className="flex items-center gap-2">
                             <Activity className="h-5 w-5 text-emerald-600" />
-                            <h3 className="text-sm font-bold text-slate-800">
+                            <h3 className="text-sm font-bold text-slate-800 dark:text-white">
                                 Recent Floor Movements
                             </h3>
                         </div>
@@ -604,9 +604,9 @@ export default function WarehouseDashboard() {
 
             {/* Quick Movement Modal */}
             {modalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
-                    <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95 duration-150">
-                        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
+                    <div className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 p-6 shadow-2xl border border-slate-100 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-150">
+                        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
                             <div className="flex items-center gap-2">
                                 <div
                                     className={`h-7 w-7 rounded-lg flex items-center justify-center text-white ${
@@ -615,41 +615,41 @@ export default function WarehouseDashboard() {
                                 >
                                     {movementType === "IN" ? <Plus className="h-4 w-4" /> : <Minus className="h-4 w-4" />}
                                 </div>
-                                <h3 className="text-base font-bold text-slate-900">
+                                <h3 className="text-base font-bold text-slate-900 dark:text-white">
                                     Quick Stock {movementType}
                                 </h3>
                             </div>
                             <button
                                 type="button"
                                 onClick={() => setModalOpen(false)}
-                                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 transition"
+                                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
                             >
                                 ✕
                             </button>
                         </div>
 
                         {modalError && (
-                            <div className="mt-3 rounded-lg bg-red-50 border border-red-200 p-3 text-xs text-red-700">
+                            <div className="mt-3 rounded-lg bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 p-3 text-xs text-red-700 dark:text-red-300">
                                 {modalError}
                             </div>
                         )}
 
                         {modalSuccess && (
-                            <div className="mt-3 rounded-lg bg-emerald-50 border border-emerald-200 p-3 text-xs text-emerald-700">
+                            <div className="mt-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/50 p-3 text-xs text-emerald-700 dark:text-emerald-300">
                                 {modalSuccess}
                             </div>
                         )}
 
                         <form onSubmit={handleQuickMovementSubmit} className="mt-4 space-y-4">
                             <div>
-                                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                                     Select Product
                                 </label>
                                 <select
                                     value={selectedInventoryId}
                                     onChange={(e) => setSelectedInventoryId(e.target.value)}
                                     required
-                                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-800 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10"
+                                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-xs font-medium text-slate-800 dark:text-slate-100 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10"
                                 >
                                     {warehouseInventory.map((item) => (
                                         <option key={item.id} value={item.id}>
@@ -660,7 +660,7 @@ export default function WarehouseDashboard() {
                             </div>
 
                             <div>
-                                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                                     Quantity ({movementType === "IN" ? "Receiving" : "Dispatching"})
                                 </label>
                                 <input
@@ -670,12 +670,12 @@ export default function WarehouseDashboard() {
                                     placeholder="Enter quantity"
                                     value={movementQty}
                                     onChange={(e) => setMovementQty(e.target.value)}
-                                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs font-medium outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10"
+                                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white px-3 py-2 text-xs font-medium outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                                     Reason / Floor Note
                                 </label>
                                 <input
@@ -683,7 +683,7 @@ export default function WarehouseDashboard() {
                                     placeholder="e.g. Delivery arrival, damaged goods, floor adjustment"
                                     value={movementNote}
                                     onChange={(e) => setMovementNote(e.target.value)}
-                                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs font-medium outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10"
+                                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white px-3 py-2 text-xs font-medium outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10"
                                 />
                             </div>
 
@@ -692,7 +692,7 @@ export default function WarehouseDashboard() {
                                     type="button"
                                     onClick={() => setModalOpen(false)}
                                     disabled={submittingMovement}
-                                    className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 transition"
+                                    className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition"
                                 >
                                     Cancel
                                 </button>

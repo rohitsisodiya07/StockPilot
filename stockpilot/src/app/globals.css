@@ -5,6 +5,8 @@
 :root {
   --background: #f8fafc;
   --foreground: #0f172a;
+  --card: #ffffff;
+  --card-border: #e2e8f0;
   color-scheme: light;
 }
 
@@ -12,6 +14,8 @@ html.dark,
 body.dark {
   --background: #090d16;
   --foreground: #f8fafc;
+  --card: #0f172a;
+  --card-border: #1e293b;
   color-scheme: dark;
 }
 
@@ -21,100 +25,253 @@ body {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-/* Comprehensive Dark Mode Theme Overrides */
-.dark body {
+/* ==========================================================================
+   Comprehensive Universal Dark Theme System
+   Ensures 100% unified dark backgrounds & crisp white text everywhere
+   ========================================================================== */
+
+/* 1. Base App & Canvas Backgrounds */
+.dark,
+.dark body,
+.dark main,
+.dark aside,
+.dark [class*="bg-[#f8fafc]"],
+.dark [class*="bg-[#f5f7fb]"],
+.dark [class*="bg-slate-50"],
+.dark [class*="bg-gray-50"],
+.dark [class*="bg-zinc-50"] {
   background-color: #090d16 !important;
-  color: #f8fafc !important;
 }
 
-/* Containers & Cards */
-.dark .bg-white {
+/* 2. Unified Card, Panel, Modal, Section & Container Backgrounds */
+.dark .bg-white,
+.dark [class*="bg-white/9"],
+.dark [class*="bg-white/8"],
+.dark [class*="bg-white/7"],
+.dark [class*="bg-white/6"],
+.dark [class*="bg-white/50"],
+.dark [class*="from-blue-50"],
+.dark [class*="via-sky-50"],
+.dark [class*="to-white"] {
+  background-color: #0f172a !important;
+}
+
+.dark [class*="bg-slate-100"],
+.dark [class*="bg-gray-100"],
+.dark [class*="bg-zinc-100"],
+.dark [class*="bg-slate-200"],
+.dark [class*="bg-gray-200"] {
+  background-color: #1e293b !important;
+}
+
+/* 3. Hover States Elimination of White/Light Flashes */
+.dark [class*="hover:bg-slate-50"]:hover,
+.dark [class*="hover:bg-slate-100"]:hover,
+.dark [class*="hover:bg-slate-200"]:hover,
+.dark [class*="hover:bg-gray-50"]:hover,
+.dark [class*="hover:bg-gray-100"]:hover,
+.dark [class*="hover:bg-gray-200"]:hover,
+.dark [class*="hover:bg-white"]:hover {
+  background-color: #1e293b !important;
+}
+
+/* 4. Pure White Primary Text for all Headings, Labels, Titles & Emphasized Text */
+.dark h1,
+.dark h2,
+.dark h3,
+.dark h4,
+.dark h5,
+.dark h6,
+.dark [class*="text-slate-950"],
+.dark [class*="text-slate-900"],
+.dark [class*="text-slate-800"],
+.dark [class*="text-gray-950"],
+.dark [class*="text-gray-900"],
+.dark [class*="text-gray-800"],
+.dark [class*="text-zinc-950"],
+.dark [class*="text-zinc-900"],
+.dark [class*="text-zinc-800"],
+.dark [class*="text-black"],
+.dark strong,
+.dark b {
+  color: #ffffff !important;
+}
+
+/* 5. High-Contrast Readable Labels and Form Text */
+.dark [class*="text-slate-700"],
+.dark [class*="text-gray-700"],
+.dark [class*="text-zinc-700"] {
+  color: #f1f5f9 !important;
+}
+
+/* 6. High-Contrast Readable Muted Text & Subheadings */
+.dark [class*="text-slate-600"],
+.dark [class*="text-gray-600"] {
+  color: #cbd5e1 !important;
+}
+
+.dark [class*="text-slate-500"],
+.dark [class*="text-gray-500"],
+.dark [class*="text-slate-400"],
+.dark [class*="text-gray-400"] {
+  color: #94a3b8 !important;
+}
+
+/* 7. Unified Dark Borders */
+.dark [class*="border-slate-1"],
+.dark [class*="border-slate-2"],
+.dark [class*="border-slate-3"],
+.dark [class*="border-gray-1"],
+.dark [class*="border-gray-2"],
+.dark [class*="border-gray-3"],
+.dark [class*="border-zinc-1"],
+.dark [class*="border-zinc-2"],
+.dark [class*="border-zinc-3"],
+.dark [class*="border-blue-100"],
+.dark [class*="border-blue-200"],
+.dark [class*="border-emerald-100"],
+.dark [class*="border-emerald-200"],
+.dark [class*="divide-slate-100"],
+.dark [class*="divide-slate-200"],
+.dark [class*="divide-gray-100"],
+.dark [class*="divide-gray-200"] {
+  border-color: #1e293b !important;
+}
+
+/* 8. Form Inputs, Selects, and Textareas */
+.dark input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+.dark select,
+.dark textarea {
+  background-color: #0f172a !important;
+  border-color: #334155 !important;
+  color: #ffffff !important;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #64748b !important;
+}
+
+.dark select option {
+  background-color: #0f172a !important;
+  color: #ffffff !important;
+}
+
+.dark input:-webkit-autofill,
+.dark input:-webkit-autofill:hover,
+.dark input:-webkit-autofill:focus,
+.dark textarea:-webkit-autofill,
+.dark select:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 1000px #0f172a inset !important;
+  -webkit-text-fill-color: #ffffff !important;
+  caret-color: #ffffff !important;
+}
+
+/* 9. Tables */
+.dark table {
   background-color: #0f172a !important;
   color: #f8fafc !important;
 }
 
-.dark .bg-slate-50,
-.dark .bg-gray-50 {
+.dark table thead,
+.dark table thead tr,
+.dark table thead th {
   background-color: #1e293b !important;
-  color: #f1f5f9 !important;
+  color: #ffffff !important;
+  border-color: #334155 !important;
 }
 
-.dark .bg-slate-100,
-.dark .bg-gray-100 {
-  background-color: #1e293b !important;
-}
-
-.dark .bg-\[\#f8fafc\],
-.dark .bg-\[\#f5f7fb\] {
-  background-color: #090d16 !important;
-}
-
-/* Borders */
-.dark .border-slate-100,
-.dark .border-slate-200,
-.dark .border-slate-300,
-.dark .border-gray-100,
-.dark .border-gray-200 {
+.dark table tbody tr {
+  background-color: #0f172a !important;
   border-color: #1e293b !important;
 }
 
-/* Typography */
-.dark .text-slate-900,
-.dark .text-gray-900,
-.dark .text-slate-800,
-.dark .text-gray-800 {
+.dark table tbody tr:hover {
+  background-color: #1e293b !important;
+}
+
+.dark table td {
   color: #f8fafc !important;
+  border-color: #1e293b !important;
 }
 
-.dark .text-slate-700,
-.dark .text-gray-700 {
-  color: #e2e8f0 !important;
+/* 10. Modals, Drawers & Popups */
+.dark [role="dialog"],
+.dark .fixed > div[class*="bg-white"],
+.dark .relative > div[class*="bg-white"],
+.dark .absolute > div[class*="bg-white"],
+.dark section[class*="bg-white"] {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+  border-color: #1e293b !important;
 }
 
-.dark .text-slate-600,
-.dark .text-gray-600,
-.dark .text-slate-500,
-.dark .text-gray-500 {
-  color: #94a3b8 !important;
+/* 11. Soft Dark Badges (Replaces washed-out light badge backgrounds) */
+.dark .bg-blue-50, .dark .bg-sky-50, .dark [class*="bg-blue-50/"], .dark [class*="bg-blue-100"], .dark [class*="bg-sky-100"] {
+  background-color: rgba(30, 58, 138, 0.35) !important;
+  color: #93c5fd !important;
+  border-color: rgba(59, 130, 246, 0.3) !important;
 }
 
-/* Inputs, Selects, and Textareas */
-.dark input,
-.dark select,
-.dark textarea {
+.dark .bg-emerald-50, .dark .bg-green-50, .dark .bg-teal-50, .dark [class*="bg-emerald-50/"], .dark [class*="bg-emerald-100"], .dark [class*="bg-green-100"] {
+  background-color: rgba(6, 78, 59, 0.35) !important;
+  color: #6ee7b7 !important;
+  border-color: rgba(16, 185, 129, 0.3) !important;
+}
+
+.dark .bg-amber-50, .dark .bg-yellow-50, .dark [class*="bg-amber-50/"], .dark [class*="bg-amber-100"], .dark [class*="bg-yellow-100"] {
+  background-color: rgba(120, 53, 15, 0.35) !important;
+  color: #fcd34d !important;
+  border-color: rgba(245, 158, 11, 0.3) !important;
+}
+
+.dark .bg-purple-50, .dark .bg-violet-50, .dark .bg-indigo-50, .dark [class*="bg-indigo-50/"], .dark [class*="bg-indigo-100"], .dark [class*="bg-violet-100"], .dark [class*="bg-purple-100"] {
+  background-color: rgba(88, 28, 135, 0.35) !important;
+  color: #d8b4fe !important;
+  border-color: rgba(147, 51, 234, 0.3) !important;
+}
+
+.dark .bg-rose-50, .dark .bg-red-50, .dark [class*="bg-rose-50/"], .dark [class*="bg-rose-100"], .dark [class*="bg-red-100"] {
+  background-color: rgba(136, 19, 55, 0.35) !important;
+  color: #fda4af !important;
+  border-color: rgba(244, 63, 94, 0.3) !important;
+}
+
+.dark .bg-orange-50, .dark [class*="bg-orange-50/"], .dark [class*="bg-orange-100"] {
+  background-color: rgba(124, 45, 18, 0.35) !important;
+  color: #fdba74 !important;
+  border-color: rgba(249, 115, 22, 0.3) !important;
+}
+
+/* 12. Recharts Tooltip Dark Mode */
+.dark .recharts-default-tooltip {
   background-color: #0f172a !important;
   border-color: #334155 !important;
   color: #f8fafc !important;
 }
 
-.dark input::placeholder {
-  color: #64748b !important;
-}
-
-/* Tables */
-.dark table thead tr {
-  background-color: #1e293b !important;
-}
-
-.dark table thead th {
-  color: #94a3b8 !important;
-}
-
-.dark table tbody tr:hover {
-  background-color: rgba(30, 41, 59, 0.6) !important;
-}
-
-/* Dropdown Options */
-.dark option {
-  background-color: #0f172a;
-  color: #f8fafc;
-}
-
-/* Shadows */
+/* 13. Custom Shadows in Dark Mode */
 .dark .shadow-sm,
 .dark .shadow-xs,
 .dark .shadow-md,
 .dark .shadow-lg,
+.dark .shadow-xl,
 .dark .shadow-2xl {
   box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* 14. Scrollbar Dark Mode */
+.dark ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.dark ::-webkit-scrollbar-track {
+  background: #090d16;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 4px;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #334155;
 }
