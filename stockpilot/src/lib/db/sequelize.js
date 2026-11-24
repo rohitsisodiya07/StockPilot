@@ -1,4 +1,5 @@
 import { Sequelize } from "sequelize";
+import mysql2 from "mysql2";
 import dns from "dns";
 
 // 1. Prefer IPv4 and configure ultra-reliable public DNS (Google + Cloudflare)
@@ -29,6 +30,7 @@ const createSequelizeInstance = () => {
             host: targetHost,
             port: Number(process.env.DB_PORT) || 3306,
             dialect: "mysql",
+            dialectModule: mysql2,
             logging: false,
             benchmark: false,
             retry: {
