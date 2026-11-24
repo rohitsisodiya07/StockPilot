@@ -34,7 +34,7 @@ export async function POST(request) {
         return Response.json(
             {
                 success: false,
-                message: "Internal Server Error",
+                message: error.message || "Internal Server Error",
             },
             { status: 500 }
         );
